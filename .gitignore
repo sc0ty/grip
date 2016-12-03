@@ -1,0 +1,7 @@
+*.o
+*.bak
+*.vim
+.grip
+grip
+gripgen
+tags
