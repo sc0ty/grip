@@ -39,6 +39,7 @@ First we need to generate index database
 find -type f | gripgen
 ```
 It will create database directory `.grip`.
+In case of great number of files, this step will take some time. Indexer typically process 100 to 1000 files per second, and the resulting database size will be about 10% of the indexed data.
 
 You could also provide file list to index
 ```
