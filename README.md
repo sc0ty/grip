@@ -31,6 +31,7 @@ cd src
 make
 make install
 ```
+For more information see [installation guide](doc/INSTALL.md)
 
 ## Usage
 First we need to generate index database
