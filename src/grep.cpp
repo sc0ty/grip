@@ -18,36 +18,16 @@ using namespace std;
 
 #define TO_LOWER(x)		((x)>='A' && (x)<='Z' ? (x)+'a'-'A' : (x))
 
-
-inline const char *matchStr(const char *str, const char *pattern, bool caseSens)
-{
-	if (caseSens)
-	{
-		return strstr(str, pattern);
-	}
-	else
-	{
-		const char *p = pattern;
-		for (; *str != '\0'; str++)
-		{
-			if (TO_LOWER(*str) == *p)
-			{
-				if (*++p == '\0')
-					return str - (p - pattern - 1);
-			}
-			else
-			{
-				p = pattern;
-			}
-		}
-
-		return NULL;
-	}
-}
+#define IS_WORD_CHAR(x)	( \
+	((x)>='a' && (x)<='z') || \
+	((x)>='A' && (x)<='Z') || \
+	((x)>='0' && (x)<='9') || \
+	((x)=='_') )
 
 
 Grep::Grep() :
 	m_caseSensitive(true),
+	m_wholeWordMatch(false),
 	m_colorOutput(false),
 	m_beforeContext(0),
 	m_afterContext(0),
@@ -66,6 +46,11 @@ void Grep::caseSensitive(bool cs)
 	m_caseSensitive = cs;
 	if (!cs)
 		patternToLower();
+}
+
+void Grep::wholeWordMatch(bool wholeWord)
+{
+	m_wholeWordMatch = wholeWord;
 }
 
 void Grep::outputFormat(bool color)
@@ -97,14 +82,13 @@ bool Grep::grepFile(const string &fname)
 	FileLineReader file(fname);
 	list<string> cachedLines;
 
-	const char *pattern = m_pattern.c_str();
 	unsigned lineNo = 1;
 	unsigned lastMatch = 0;
 	const char *line, *match;
 
 	while ((line = file.readLine(false)) != NULL)
 	{
-		match = matchStr(line, pattern, m_caseSensitive);
+		match = matchStr(line);
 
 		if (match)
 		{
@@ -140,6 +124,47 @@ bool Grep::grepFile(const string &fname)
 	return lastMatch;
 }
 
+const char *Grep::matchStr(const char *str) const
+{
+	const char *res = NULL;
+	const char *pattern = m_pattern.c_str();
+
+	if (m_caseSensitive)
+	{
+		res = strstr(str, pattern);
+	}
+	else
+	{
+		const char *p = pattern;
+		for (const char *s = str; *s != '\0'; s++)
+		{
+			if (TO_LOWER(*s) == *p)
+			{
+				if (*++p == '\0')
+				{
+					res = s - (p - pattern - 1);
+					break;
+				}
+			}
+			else
+			{
+				p = pattern;
+			}
+		}
+	}
+
+	if (res && m_wholeWordMatch)
+	{
+		if ((res > str) && IS_WORD_CHAR(res[-1]))
+			return NULL;
+
+		if (IS_WORD_CHAR(res[m_pattern.size()]))
+			return NULL;
+	}
+
+	return res;
+}
+
 void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 		const char *match)
 {
@@ -160,8 +185,6 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 
 		if (match)
 		{
-			const char *pattern = m_pattern.c_str();
-
 			while (match)
 			{
 				printf("%.*s" COL_MATCH "%.*s" COL_END,
@@ -169,7 +192,7 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 						(int)m_pattern.size(), match);
 
 				line = match + m_pattern.size();
-				match = matchStr(line, pattern, m_caseSensitive);
+				match = matchStr(line);
 			}
 		}
 

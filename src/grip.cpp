@@ -28,10 +28,11 @@ static struct option const LONGOPTS[] =
 	{"ignore-case", no_argument, NULL, 'i'},
 	{"list", no_argument, NULL, 'l'},
 	{"no-messages", no_argument, NULL, 's'},
+	{"word-regexp", no_argument, NULL, 'w'},
 	{NULL, 0, NULL, 0}
 };
 
-static char const SHORTOPTS[] = "A:B:C:hils";
+static char const SHORTOPTS[] = "A:B:C:hilsw";
 
 static void usage(const char *name);
 
@@ -90,6 +91,10 @@ int main(int argc, char * const argv[])
 
 				case 's':
 					verbose = 0;
+					break;
+
+				case 'w':
+					grep.wholeWordMatch(true);
 					break;
 
 				case 'h':
@@ -158,6 +163,7 @@ void usage(const char *name)
 	"\n"
 	"Options:\n"
 	"  -i, --ignore-case         ignore case distinction in PATTERN\n"
+	"  -w, --word-regexp         force PATTERN to match only whole words\n"
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"
 	"  -C, --context=NUM         print NUM lines of output context\n"
