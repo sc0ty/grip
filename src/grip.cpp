@@ -160,6 +160,7 @@ void usage(const char *name)
 	printf("Usage: %s [OPTIONS] PATTERN\n"
 	"Indexed grep - search for PATTERN in previously indexed files "
 	"(with gripgen).\n"
+	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
 	"Options:\n"
 	"  -i, --ignore-case         ignore case distinction in PATTERN\n"

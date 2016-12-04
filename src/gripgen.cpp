@@ -196,6 +196,7 @@ void usage(const char *name)
 {
 	printf("Usage: %s [OPTIONS] [LIST]\n"
 	"Generate index for grip\n"
+	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
 	"Options:\n"
 	"  -v      be verbose (repeat to increase)\n"
