@@ -58,8 +58,8 @@ int main(int argc, char * const argv[])
 		if (optind < argc)
 		{
 			if (verbose >= 2)
-				println("reading list from file %s", optarg);
-			files.open(optarg);
+				println("reading list from file %s", argv[optind]);
+			files.open(argv[optind]);
 		}
 		else
 		{
