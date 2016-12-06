@@ -41,10 +41,8 @@ int main(int argc, char * const argv[])
 {
 	try
 	{
-		string dbdir, cwd;
-
-		getTrigramsDir(dbdir);
-		getCurrentDirectory(cwd);
+		string dbdir = getIndexPath();
+		string cwd = getCurrentDirectory();
 
 		Finder finder(dbdir);
 		Ids ids;

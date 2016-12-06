@@ -10,7 +10,7 @@
 
 
 void makeDirectory(const std::string &path);
-void getCurrentDirectory(std::string &cwd);
+std::string getCurrentDirectory();
 bool directoryExists(const char *path);
 
 // dir and path must be canonical
@@ -32,6 +32,8 @@ inline std::string &canonizePath(std::string &path)
 	canonizePath(path, result);
 	return path = result;
 }
+
+std::string getIndexPath(const std::string &dir = "");
 
 #endif
 

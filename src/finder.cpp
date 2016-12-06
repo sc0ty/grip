@@ -27,31 +27,9 @@ inline uint32_t trigramToLower(uint32_t trigram)
 }
 
 
-void getTrigramsDir(string &dir)
-{
-	if (dir.empty())
-		getCurrentDirectory(dir);
-
-	string gdir = dir + PATH_DELIMITER + GRIP_DIR;
-
-	while (!directoryExists(gdir.c_str()))
-	{
-		size_t pos = dir.rfind(PATH_DELIMITER, dir.size());
-		if ((pos == string::npos) || (pos == 0))
-			throw FuncError("cannot find grip database");
-
-		dir = dir.substr(0, pos);
-		gdir = dir + PATH_DELIMITER + GRIP_DIR;
-	}
-}
-
-
 Finder::Finder(const string &dirDb) : m_caseSensitive(true)
 {
-	string dir = dirDb;
-
-	if (dir.empty())
-		getTrigramsDir(dir);
+	string dir = !dirDb.empty() ? dirDb : getIndexPath();
 
 	m_dataFile.open(dir + PATH_DELIMITER + TRIGRAMS_DATA_PATH, "r");
 	File(dir + PATH_DELIMITER + TRIGRAMS_LIST_PATH, "r").readVector(m_indexes);

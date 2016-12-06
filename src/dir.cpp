@@ -1,5 +1,6 @@
 #include "dir.h"
 #include "error.h"
+#include "config.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -16,7 +17,7 @@ void makeDirectory(const string &path)
 		throw FuncError("cannot create directory", errno).add("path", path);
 }
 
-void getCurrentDirectory(string &cwd)
+string getCurrentDirectory()
 {
 	size_t size = 1024;
 	char *buffer = new char[size];
@@ -28,6 +29,8 @@ void getCurrentDirectory(string &cwd)
 		buffer = new char[size *= 2];
 	}
 
+	string cwd(res);
+
 	if (res)
 		cwd = buffer;
 
@@ -35,6 +38,8 @@ void getCurrentDirectory(string &cwd)
 
 	if (res == NULL)
 		throw FuncError("cannot obtain current working directory", errno);
+
+	return cwd;
 }
 
 bool directoryExists(const char *path)
@@ -128,3 +133,20 @@ string &canonizePath(const char *path, string &result)
 	return result;
 }
 
+string getIndexPath(const string &refdir)
+{
+	string dir = !refdir.empty() ? refdir : getCurrentDirectory();
+	string gdir = dir + PATH_DELIMITER + GRIP_DIR;
+
+	while (!directoryExists(gdir.c_str()))
+	{
+		size_t pos = dir.rfind(PATH_DELIMITER, dir.size());
+		if ((pos == string::npos) || (pos == 0))
+			throw FuncError("can't find index database");
+
+		dir = dir.substr(0, pos);
+		gdir = dir + PATH_DELIMITER + GRIP_DIR;
+	}
+
+	return dir;
+}

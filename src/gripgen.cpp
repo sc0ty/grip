@@ -29,15 +29,20 @@ int main(int argc, char * const argv[])
 		Indexer indexer;
 		FileLineReader files;
 		int verbose = 1;
+		bool updateIndex = false;
 		size_t chunkSize = 64 * 1024 * 1024;
 
 		int opt;
-		while ((opt = getopt(argc, argv, "s:vqh")) != -1)
+		while ((opt = getopt(argc, argv, "s:uvqh")) != -1)
 		{
 			switch (opt)
 			{
 				case 's':
 					chunkSize = atol(optarg) * 1024 * 1024;
+					break;
+
+				case 'u':
+					updateIndex = true;
 					break;
 
 				case 'v':
@@ -60,6 +65,12 @@ int main(int argc, char * const argv[])
 			if (verbose >= 2)
 				println("reading list from file %s", argv[optind]);
 			files.open(argv[optind]);
+		}
+		else if (updateIndex)
+		{
+			if (verbose >= 2)
+				println("updating existing index (\"" FILE_LIST_PATH "\")");
+			files.open(FILE_LIST_PATH);
 		}
 		else
 		{
@@ -199,6 +210,7 @@ void usage(const char *name)
 	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
 	"Options:\n"
+	"  -u      update existing index (reindex file)\n"
 	"  -v      be verbose (repeat to increase)\n"
 	"  -q      be quiet\n"
 	"  -h      print this help\n"
