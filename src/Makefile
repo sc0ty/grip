@@ -24,6 +24,7 @@ SOURCES = \
 		  fileline.cpp \
 		  print.cpp \
 		  dir.cpp \
+		  glob.cpp \
 		  error.cpp \
 
 HEADERS = \
@@ -38,6 +39,7 @@ HEADERS = \
 		  fileline.h \
 		  print.h \
 		  dir.h \
+		  glob.h \
 		  config.h \
 		  error.h \
 

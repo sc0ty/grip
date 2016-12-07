@@ -1,5 +1,6 @@
 #include "finder.h"
 #include "grep.h"
+#include "glob.h"
 #include "dir.h"
 #include "error.h"
 #include <cstring>
@@ -14,6 +15,8 @@ using namespace std;
 enum
 {
 	COLOR_OPTION = CHAR_MAX + 1,
+	EXCLUDE_OPTION,
+	INCLUDE_OPTION,
 };
 
 
@@ -26,6 +29,8 @@ static struct option const LONGOPTS[] =
 	{"colour", optional_argument, NULL, COLOR_OPTION},
 	{"help", no_argument, NULL, 'h'},
 	{"ignore-case", no_argument, NULL, 'i'},
+	{"exclude", required_argument, NULL, EXCLUDE_OPTION},
+	{"include", required_argument, NULL, INCLUDE_OPTION},
 	{"list", no_argument, NULL, 'l'},
 	{"no-messages", no_argument, NULL, 's'},
 	{"word-regexp", no_argument, NULL, 'w'},
@@ -49,6 +54,8 @@ int main(int argc, char * const argv[])
 
 		Grep grep;
 		grep.outputFormat(isatty(STDOUT_FILENO));
+
+		Glob glob;
 
 		bool listOnly = false;
 		int verbose = 1;
@@ -95,6 +102,14 @@ int main(int argc, char * const argv[])
 					grep.wholeWordMatch(true);
 					break;
 
+				case EXCLUDE_OPTION:
+					glob.addExcludePattern(optarg);
+					break;
+
+				case INCLUDE_OPTION:
+					glob.addIncludePattern(optarg);
+					break;
+
 				case 'h':
 				default:
 					usage(argv[0]);
@@ -118,7 +133,7 @@ int main(int argc, char * const argv[])
 		{
 			string filePath;
 			canonizePath(dbdir + PATH_DELIMITER + finder.getFile(id), filePath);
-			if (isInDirectory(cwd, filePath))
+			if (isInDirectory(cwd, filePath) && glob.compare(filePath))
 			{
 				filePath = getRelativePath(cwd, filePath);
 
@@ -163,6 +178,8 @@ void usage(const char *name)
 	"Options:\n"
 	"  -i, --ignore-case         ignore case distinction in PATTERN\n"
 	"  -w, --word-regexp         force PATTERN to match only whole words\n"
+	"      --include=GLOB        search only files that match GLOB pattern\n"
+	"      --exclude=GLOB        skip files and directories matching GLOB pattern\n"
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"
 	"  -C, --context=NUM         print NUM lines of output context\n"
