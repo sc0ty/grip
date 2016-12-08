@@ -41,11 +41,10 @@ void Grep::setPattern(const string &pattern)
 		patternToLower();
 }
 
-void Grep::caseSensitive(bool cs)
+void Grep::caseInsensitive()
 {
-	m_caseSensitive = cs;
-	if (!cs)
-		patternToLower();
+	m_caseSensitive = false;
+	patternToLower();
 }
 
 void Grep::wholeWordMatch(bool wholeWord)

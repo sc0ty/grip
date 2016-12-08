@@ -19,6 +19,7 @@ enum
 	EXCLUDE_OPTION,
 	EXCLUDE_FROM_OPTION,
 	INCLUDE_OPTION,
+	EXTENDED_GLOB_OPTION,
 };
 
 
@@ -30,10 +31,11 @@ static struct option const LONGOPTS[] =
 	{"color", optional_argument, NULL, COLOR_OPTION},
 	{"colour", optional_argument, NULL, COLOR_OPTION},
 	{"help", no_argument, NULL, 'h'},
-	{"ignore-case", no_argument, NULL, 'i'},
+	{"ignore-case", optional_argument, NULL, 'i'},
 	{"exclude", required_argument, NULL, EXCLUDE_OPTION},
 	{"exclude-from", required_argument, NULL, EXCLUDE_FROM_OPTION},
 	{"include", required_argument, NULL, INCLUDE_OPTION},
+	{"extended-glob", no_argument, NULL, EXTENDED_GLOB_OPTION},
 	{"list", no_argument, NULL, 'l'},
 	{"no-messages", no_argument, NULL, 's'},
 	{"word-regexp", no_argument, NULL, 'w'},
@@ -90,8 +92,18 @@ int main(int argc, char * const argv[])
 					break;
 
 				case 'i':
-					finder.caseSensitive(false);
-					grep.caseSensitive(false);
+					if ((optarg != NULL) && (strcmp(optarg, "all") == 0))
+						optarg = NULL;
+
+					if ((optarg == NULL) || (strcmp(optarg, "pattern") == 0))
+					{
+						finder.caseSensitive(false);
+						grep.caseInsensitive();
+					}
+					if ((optarg == NULL) || (strcmp(optarg, "glob") == 0))
+					{
+						glob.caseSensitive(false);
+					}
 					break;
 
 				case 'l':
@@ -116,6 +128,10 @@ int main(int argc, char * const argv[])
 
 				case INCLUDE_OPTION:
 					glob.addIncludePattern(optarg);
+					break;
+
+				case EXTENDED_GLOB_OPTION:
+					glob.extendedMatch(true);
 					break;
 
 				case 'h':
@@ -201,18 +217,20 @@ void usage(const char *name)
 	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
 	"Options:\n"
-	"  -i, --ignore-case         ignore case distinction in PATTERN\n"
+	"  -i, --ignore-case[=WHERE] ignore case distinction in PATTERN\n"
+	"                            WHERE is 'pattern', 'glob' or 'all' (default)\n"
 	"  -w, --word-regexp         force PATTERN to match only whole words\n"
 	"      --include=GLOB        search only files that match GLOB pattern\n"
 	"      --exclude=GLOB        skip files and directories matching GLOB pattern\n"
 	"      --exclude-from=FILE   skip files matching any file pattern from FILE\n"
+	"      --extended--glob      use ksh-like extended match for globbing\n"
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"
 	"  -C, --context=NUM         print NUM lines of output context\n"
 	"  -l, --list                only list files with potential match\n"
 	"      --color[=WHEN],\n"
 	"      --colour[=WHEN]       use markers to highlight the matching strings;\n"
-	"                            WHEN is 'always', 'never', or 'auto'\n"
+	"                            WHEN is 'always', 'never', or 'auto' (default)\n"
 	"  -s, --no-messages         supress error messages\n"
 	"  -h, --help                display this help and exit\n",
 	name);

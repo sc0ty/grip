@@ -12,7 +12,7 @@ class Grep
 		Grep();
 
 		void setPattern(const std::string &pattern);
-		void caseSensitive(bool sensitive);
+		void caseInsensitive();
 		void wholeWordMatch(bool wholeWord);
 
 		void outputFormat(bool color);
