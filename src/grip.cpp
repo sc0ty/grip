@@ -1,6 +1,7 @@
 #include "finder.h"
 #include "grep.h"
 #include "glob.h"
+#include "fileline.h"
 #include "dir.h"
 #include "error.h"
 #include <cstring>
@@ -16,6 +17,7 @@ enum
 {
 	COLOR_OPTION = CHAR_MAX + 1,
 	EXCLUDE_OPTION,
+	EXCLUDE_FROM_OPTION,
 	INCLUDE_OPTION,
 };
 
@@ -30,6 +32,7 @@ static struct option const LONGOPTS[] =
 	{"help", no_argument, NULL, 'h'},
 	{"ignore-case", no_argument, NULL, 'i'},
 	{"exclude", required_argument, NULL, EXCLUDE_OPTION},
+	{"exclude-from", required_argument, NULL, EXCLUDE_FROM_OPTION},
 	{"include", required_argument, NULL, INCLUDE_OPTION},
 	{"list", no_argument, NULL, 'l'},
 	{"no-messages", no_argument, NULL, 's'},
@@ -39,6 +42,7 @@ static struct option const LONGOPTS[] =
 
 static char const SHORTOPTS[] = "A:B:C:hilsw";
 
+static void readExcludeFromFile(Glob &glob, const char *fname);
 static void usage(const char *name);
 
 
@@ -106,6 +110,10 @@ int main(int argc, char * const argv[])
 					glob.addExcludePattern(optarg);
 					break;
 
+				case EXCLUDE_FROM_OPTION:
+					readExcludeFromFile(glob, optarg);
+					break;
+
 				case INCLUDE_OPTION:
 					glob.addIncludePattern(optarg);
 					break;
@@ -168,6 +176,23 @@ int main(int argc, char * const argv[])
 	}
 }
 
+void readExcludeFromFile(Glob &glob, const char *fname)
+{
+	try
+	{
+		FileLineReader file(fname);
+		const char *line;
+
+		while ((line = file.readLine(false)) != NULL)
+			glob.addExcludePattern(line);
+	}
+	catch (const Error &ex)
+	{
+		fprintf(stderr, "error: invalid exclude file \"%s\"\n", fname);
+		throw;
+	}
+}
+
 void usage(const char *name)
 {
 	printf("Usage: %s [OPTIONS] PATTERN\n"
@@ -180,6 +205,7 @@ void usage(const char *name)
 	"  -w, --word-regexp         force PATTERN to match only whole words\n"
 	"      --include=GLOB        search only files that match GLOB pattern\n"
 	"      --exclude=GLOB        skip files and directories matching GLOB pattern\n"
+	"      --exclude-from=FILE   skip files matching any file pattern from FILE\n"
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"
 	"  -C, --context=NUM         print NUM lines of output context\n"
