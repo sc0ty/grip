@@ -20,6 +20,7 @@ enum
 	EXCLUDE_FROM_OPTION,
 	INCLUDE_OPTION,
 	EXTENDED_GLOB_OPTION,
+	GLOB_TYPE_OPTIONS,			// must be last one
 };
 
 
@@ -39,6 +40,13 @@ static struct option const LONGOPTS[] =
 	{"list", no_argument, NULL, 'l'},
 	{"no-messages", no_argument, NULL, 's'},
 	{"word-regexp", no_argument, NULL, 'w'},
+
+#define GLOB_TYPE_FILTER(id, name, ...) \
+	{#name, no_argument, NULL, GLOB_TYPE_OPTIONS + id*2}, \
+	{"no" #name, no_argument, NULL, GLOB_TYPE_OPTIONS + id*2 + 1},
+#include "globfilters.def"
+#undef GLOB_TYPE_FILTER
+
 	{NULL, 0, NULL, 0}
 };
 
@@ -133,6 +141,25 @@ int main(int argc, char * const argv[])
 				case EXTENDED_GLOB_OPTION:
 					glob.extendedMatch(true);
 					break;
+
+#define GLOB_TYPE_FILTER(id, name, ...) \
+				case GLOB_TYPE_OPTIONS + id*2: \
+				{ \
+					static const char *patterns[] = { __VA_ARGS__ }; \
+					for (size_t i = 0; i < sizeof(patterns)/sizeof(char*); i++) \
+						glob.addIncludePattern(patterns[i]); \
+					break; \
+				} \
+				case GLOB_TYPE_OPTIONS + id*2 + 1: \
+				{ \
+					static const char *patterns[] = { __VA_ARGS__ }; \
+					for (size_t i = 0; i < sizeof(patterns)/sizeof(char*); i++) \
+						glob.addExcludePattern(patterns[i]); \
+					break; \
+				} \
+
+#include "globfilters.def"
+#undef GLOB_TYPE_FILTER
 
 				case 'h':
 				default:

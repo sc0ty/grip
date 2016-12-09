@@ -40,6 +40,7 @@ HEADERS = \
 		  print.h \
 		  dir.h \
 		  glob.h \
+		  globfilters.def \
 		  config.h \
 		  error.h \
 
