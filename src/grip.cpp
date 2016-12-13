@@ -250,7 +250,7 @@ void usage(const char *name)
 	"      --include=GLOB        search only files that match GLOB pattern\n"
 	"      --exclude=GLOB        skip files and directories matching GLOB pattern\n"
 	"      --exclude-from=FILE   skip files matching any file pattern from FILE\n"
-	"      --extended--glob      use ksh-like extended match for globbing\n"
+	"      --extended-glob       use ksh-like extended match for globbing\n"
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"
 	"  -C, --context=NUM         print NUM lines of output context\n"
