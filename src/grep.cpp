@@ -25,6 +25,9 @@ using namespace std;
 	((x)=='_') )
 
 
+static string &toLower(string &str);
+
+
 Grep::Grep() :
 	m_caseSensitive(true),
 	m_wholeWordMatch(false),
@@ -34,17 +37,24 @@ Grep::Grep() :
 	m_lastLine(0)
 {}
 
-void Grep::setPattern(const string &pattern)
+void Grep::addPattern(const string &pattern)
 {
-	m_pattern = pattern;
-	if (!m_caseSensitive)
-		patternToLower();
+	if (m_caseSensitive)
+	{
+		m_patterns.push_back(pattern);
+	}
+	else
+	{
+		string p = pattern;
+		m_patterns.push_back(toLower(p));
+	}
 }
 
 void Grep::caseInsensitive()
 {
 	m_caseSensitive = false;
-	patternToLower();
+	for (string &pattern : m_patterns)
+		toLower(pattern);
 }
 
 void Grep::wholeWordMatch(bool wholeWord)
@@ -55,12 +65,6 @@ void Grep::wholeWordMatch(bool wholeWord)
 void Grep::outputFormat(bool color)
 {
 	m_colorOutput = color;
-}
-
-void Grep::patternToLower()
-{
-	for (size_t i = 0; i < m_pattern.size(); i++)
-		m_pattern[i] = TO_LOWER(m_pattern[i]);
 }
 
 void Grep::setBeforeContext(unsigned linesNo)
@@ -75,7 +79,7 @@ void Grep::setAfterContext(unsigned linesNo)
 
 bool Grep::grepFile(const string &fname)
 {
-	if (m_pattern.empty())
+	if (m_patterns.empty())
 		throw ThisError("pattern not set");
 
 	FileLineReader file(fname);
@@ -83,17 +87,17 @@ bool Grep::grepFile(const string &fname)
 
 	unsigned lineNo = 1;
 	unsigned lastMatch = 0;
-	const char *line, *match;
+	const char *line;
 
 	while ((line = file.readLine(false)) != NULL)
 	{
-		match = matchStr(line);
+		Match match = matchStr(line);
 
-		if (match)
+		if (match.pos)
 		{
 			unsigned no = lineNo - cachedLines.size();
 			for (const string &line : cachedLines)
-				printMatch(fname.c_str(), no++, line.c_str(), NULL);
+				printMatch(fname.c_str(), no++, line.c_str());
 			cachedLines.clear();
 
 			printMatch(fname.c_str(), lineNo, line, match);
@@ -123,10 +127,10 @@ bool Grep::grepFile(const string &fname)
 	return lastMatch;
 }
 
-const char *Grep::matchStr(const char *str) const
+const char *Grep::matchStr(const char *str, const string &matchPattern) const
 {
 	const char *res = NULL;
-	const char *pattern = m_pattern.c_str();
+	const char *pattern = matchPattern.c_str();
 
 	if (m_caseSensitive)
 	{
@@ -157,17 +161,35 @@ const char *Grep::matchStr(const char *str) const
 		if ((res > str) && IS_WORD_CHAR(res[-1]))
 			return NULL;
 
-		if (IS_WORD_CHAR(res[m_pattern.size()]))
+		if (IS_WORD_CHAR(res[matchPattern.size()]))
 			return NULL;
 	}
 
 	return res;
 }
 
-void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
-		const char *match)
+Grep::Match Grep::matchStr(const char *str) const
 {
-	char sep = match ? ':' : '-';
+	Match firstMatch;
+
+	for (const string &pattern : m_patterns)
+	{
+		const char *match = matchStr(str, pattern);
+		if ((match) && (firstMatch.pos == NULL || match < firstMatch.pos))
+		{
+			firstMatch.pos = match;
+			firstMatch.len = pattern.size();
+		}
+	}
+
+	return firstMatch;
+}
+
+void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
+		const Match &firstMatch)
+{
+	Match match = firstMatch;
+	char sep = match.pos ? ':' : '-';
 
 	if (m_beforeContext || m_afterContext)
 	{
@@ -182,17 +204,14 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 		printf(COL_FILE "%s" COL_SEP "%c" COL_LINE "%u" COL_SEP "%c" COL_END,
 				fname, sep, lineNo, sep);
 
-		if (match)
+		while (match.pos)
 		{
-			while (match)
-			{
-				printf("%.*s" COL_MATCH "%.*s" COL_END,
-						(int)(match-line), line,
-						(int)m_pattern.size(), match);
+			printf("%.*s" COL_MATCH "%.*s" COL_END,
+					(int)(match.pos-line), line,
+					(int)match.len, match.pos);
 
-				line = match + m_pattern.size();
-				match = matchStr(line);
-			}
+			line = match.pos + match.len;
+			match = matchStr(line);
 		}
 
 		printf("%s\n", line);
@@ -201,4 +220,15 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 	{
 		printf("%s%c%u%c%s\n", fname, sep, lineNo, sep, line);
 	}
+}
+
+Grep::Match::Match() : pos(NULL), len(0)
+{}
+
+string &toLower(string &str)
+{
+	for (size_t i = 0; i < str.length(); i++)
+		str[i] = TO_LOWER(str[i]);
+
+	return str;
 }

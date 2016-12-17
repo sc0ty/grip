@@ -174,10 +174,14 @@ int main(int argc, char * const argv[])
 			return 2;
 		}
 
-		const char *pattern = argv[optind];
-		finder.find(pattern, ids);
-
-		grep.setPattern(pattern);
+		for (int i = optind; i < argc; i++)
+		{
+			const char *pattern = argv[i];
+			Ids patternIds;
+			finder.find(pattern, patternIds);
+			ids.merge(patternIds);
+			grep.addPattern(pattern);
+		}
 
 		bool found = false;
 		for (auto id : ids)
@@ -238,7 +242,7 @@ void readExcludeFromFile(Glob &glob, const char *fname)
 
 void usage(const char *name)
 {
-	printf("Usage: %s [OPTIONS] PATTERN\n"
+	printf("Usage: %s [OPTIONS] PATTERN [PATTERN...]\n"
 	"Indexed grep - search for PATTERN in previously indexed files "
 	"(with gripgen).\n"
 	"Author: Mike Szymaniak, http://sc0ty.pl\n"

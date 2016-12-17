@@ -11,7 +11,7 @@ class Grep
 	public:
 		Grep();
 
-		void setPattern(const std::string &pattern);
+		void addPattern(const std::string &pattern);
 		void caseInsensitive();
 		void wholeWordMatch(bool wholeWord);
 
@@ -23,13 +23,22 @@ class Grep
 		bool grepFile(const std::string &fname);
 
 	private:
-		void patternToLower();
-		const char *matchStr(const char *str) const;
+		struct Match
+		{
+			const char *pos;
+			size_t len;
+
+			Match();
+		};
+
+		const char *matchStr(const char *str, const std::string &pattern) const;
+		Match matchStr(const char *str) const;
+
 		void printMatch(const char *fname, unsigned lineNo, const char *line,
-				const char *match = NULL);
+				const Match &firstMatch = Match());
 
 	private:
-		std::string m_pattern;
+		std::vector<std::string> m_patterns;
 		unsigned m_caseSensitive : 1;
 		unsigned m_wholeWordMatch : 1;
 		unsigned m_colorOutput : 1;
