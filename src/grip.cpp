@@ -35,6 +35,7 @@ static struct option const LONGOPTS[] =
 	{"ignore-case", optional_argument, NULL, 'i'},
 	{"exclude", required_argument, NULL, EXCLUDE_OPTION},
 	{"exclude-from", required_argument, NULL, EXCLUDE_FROM_OPTION},
+	{"file", required_argument, NULL, 'f'},
 	{"include", required_argument, NULL, INCLUDE_OPTION},
 	{"extended-glob", no_argument, NULL, EXTENDED_GLOB_OPTION},
 	{"list", no_argument, NULL, 'l'},
@@ -50,8 +51,9 @@ static struct option const LONGOPTS[] =
 	{NULL, 0, NULL, 0}
 };
 
-static char const SHORTOPTS[] = "A:B:C:hilsw";
+static char const SHORTOPTS[] = "A:B:C:f:hilsw";
 
+static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
 static void usage(const char *name);
 
@@ -63,6 +65,7 @@ int main(int argc, char * const argv[])
 		string dbdir = getIndexPath();
 		string cwd = getCurrentDirectory();
 
+		vector<string> patterns;
 		Finder finder(dbdir);
 		Ids ids;
 
@@ -97,6 +100,10 @@ int main(int argc, char * const argv[])
 						grep.outputFormat(true);
 					else if (strcmp(optarg, "never") == 0)
 						grep.outputFormat(false);
+					break;
+
+				case 'f':
+					readPatternsFromFile(optarg, patterns);
 					break;
 
 				case 'i':
@@ -168,15 +175,17 @@ int main(int argc, char * const argv[])
 			}
 		}
 
-		if (optind >= argc)
+		for (int i = optind; i < argc; i++)
+			patterns.push_back(argv[i]);
+
+		if (patterns.empty())
 		{
 			usage(argv[0]);
 			return 2;
 		}
 
-		for (int i = optind; i < argc; i++)
+		for (const string &pattern : patterns)
 		{
-			const char *pattern = argv[i];
 			Ids patternIds;
 			finder.find(pattern, patternIds);
 			ids.merge(patternIds);
@@ -223,6 +232,20 @@ int main(int argc, char * const argv[])
 	}
 }
 
+void readPatternsFromFile(const char *fname, vector<string> &patterns)
+{
+	try
+	{
+		FileLineReader file(fname);
+		while (!file.eof())
+			patterns.push_back(file.readLine());
+	}
+	catch (const EndOfFile&)
+	{
+		// silently ignore
+	}
+}
+
 void readExcludeFromFile(Glob &glob, const char *fname)
 {
 	try
@@ -254,6 +277,7 @@ void usage(const char *name)
 	"      --include=GLOB        search only files that match GLOB pattern\n"
 	"      --exclude=GLOB        skip files and directories matching GLOB pattern\n"
 	"      --exclude-from=FILE   skip files matching any file pattern from FILE\n"
+	"  -f, --file=FILE           obtain PATTERN from FILE\n"
 	"      --extended-glob       use ksh-like extended match for globbing\n"
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"

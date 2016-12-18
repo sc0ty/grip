@@ -1,5 +1,3 @@
-- handle greps --include, --exclude, --file
-- handle regexp
 - add support to UTF16
 - add continue option to gripgen
 - unit tests for CompressedIds
