@@ -8,6 +8,7 @@ Author: [Mike Szymaniak](http://sc0ty.pl)
 - intended mainly (but not limited to) source code;
 - support for Huge Blobs of Legacy Code&trade;;
 - language & encoding agnostic (excluding UTF-16);
+- search with regex (basic and extended) or fixed string;
 - case sensitive and case insensitive search;
 - search limited to current subdirectory;
 - context line control (`grep`s `-B`, `-A` and `-C` switches);
@@ -16,8 +17,8 @@ Author: [Mike Szymaniak](http://sc0ty.pl)
 ## Limitations
 - index must be generated prior to search;
 - and it must be up to date with files content;
-- no regexp support (not yet);
-- only limited `grep`s switches are implemented, no `--include`, `--exclude`, `-v`, `-x` and many others;
+- some regular expressions are too convoluted to lookup into index;
+- only limited `grep`s switches are implemented;
 - search pattern is assumed to be encoded the same way as searched files (usually not the case for ASCII characters, e.g. source code).
 
 ## Requirements
@@ -50,6 +51,7 @@ Indexed files must be located inside current directory and its subdirectories.
 Now you could perform search, e.g.:
 ```
 grip printf
+grip -E '(foo|bar)-[a-z]*'
 grip -i -C3 'hello world'
 grip --list main
 ```
