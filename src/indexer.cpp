@@ -84,7 +84,7 @@ bool Indexer::indexFile(const string &fname)
 	}
 
 	uint32_t fileId = addFile(fname);
-	uint32_t trigram = 0;
+	uint32_t trigram = '\n';
 
 	while (size > 0)
 	{
@@ -99,12 +99,25 @@ bool Indexer::indexFile(const string &fname)
 
 			if (trigram & 0xff0000)
 				addTrigram(trigram, fileId);
+
+			// don't keep trigrams with newline symbol in the middle as we are
+			// grepping whole lines only
+			if (data[i] == '\n')
+				trigram = '\n';
 		}
 
 		if (file.eof())
 			break;
 
 		size = file.readN(data, 1, m_buffer.size());
+	}
+
+	if (trigram & 0xff00)
+	{
+		// add newline at the end of file to ensure '$' works properly
+		trigram <<= 8;
+		trigram |= '\n';
+		addTrigram(trigram, fileId);
 	}
 
 	m_filesTotalSize += fileSize;

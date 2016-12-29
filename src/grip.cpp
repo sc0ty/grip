@@ -1,5 +1,6 @@
-#include "finder.h"
+#include "dbreader.h"
 #include "grep.h"
+#include "pattern.h"
 #include "glob.h"
 #include "fileline.h"
 #include "dir.h"
@@ -26,6 +27,9 @@ enum
 
 static struct option const LONGOPTS[] =
 {
+	{"extended-regex", no_argument, NULL, 'E'},
+	{"fixed-strings", no_argument, NULL, 'F'},
+	{"basic-regex", no_argument, NULL, 'G'},
 	{"after-context", required_argument, NULL, 'A'},
 	{"before-context", required_argument, NULL, 'B'},
 	{"context", required_argument, NULL, 'C'},
@@ -51,7 +55,7 @@ static struct option const LONGOPTS[] =
 	{NULL, 0, NULL, 0}
 };
 
-static char const SHORTOPTS[] = "A:B:C:f:hilsw";
+static char const SHORTOPTS[] = "A:B:C:EFf:Ghilsw";
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
@@ -66,7 +70,10 @@ int main(int argc, char * const argv[])
 		string cwd = getCurrentDirectory();
 
 		vector<string> patterns;
-		Finder finder(dbdir);
+		Pattern::Mode mode = Pattern::BASIC;
+		bool caseSensitivePatterns = true;
+
+		DbReader database(dbdir);
 		Ids ids;
 
 		Grep grep;
@@ -111,14 +118,21 @@ int main(int argc, char * const argv[])
 						optarg = NULL;
 
 					if ((optarg == NULL) || (strcmp(optarg, "pattern") == 0))
-					{
-						finder.caseSensitive(false);
-						grep.caseInsensitive();
-					}
+						caseSensitivePatterns = false;
 					if ((optarg == NULL) || (strcmp(optarg, "glob") == 0))
-					{
 						glob.caseSensitive(false);
-					}
+					break;
+
+				case 'E':
+					mode = Pattern::EXTENDED;
+					break;
+
+				case 'F':
+					mode = Pattern::FIXED;
+					break;
+
+				case 'G':
+					mode = Pattern::BASIC;
 					break;
 
 				case 'l':
@@ -184,19 +198,21 @@ int main(int argc, char * const argv[])
 			return 2;
 		}
 
+		Node tree;
 		for (const string &pattern : patterns)
 		{
-			Ids patternIds;
-			finder.find(pattern, patternIds);
-			ids.merge(patternIds);
-			grep.addPattern(pattern);
+			Pattern *p = Pattern::create(pattern, mode, caseSensitivePatterns);
+			grep.addPattern(p);
+			p->tokenize(tree);
 		}
 
+		tree.findIds(ids, database);
 		bool found = false;
+
 		for (auto id : ids)
 		{
 			string filePath;
-			canonizePath(dbdir + PATH_DELIMITER + finder.getFile(id), filePath);
+			canonizePath(dbdir + PATH_DELIMITER + database.getFile(id), filePath);
 			if (isInDirectory(cwd, filePath) && glob.compare(filePath))
 			{
 				filePath = getRelativePath(cwd, filePath);
@@ -270,24 +286,33 @@ void usage(const char *name)
 	"(with gripgen).\n"
 	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
-	"Options:\n"
+	"Regexp selection and interpretation:\n"
+	"  -E, --extended-regexp     PATTERN is an extended regular expression\n"
+	"  -F, --fixed-strings       PATTERN is a strings\n"
+	"  -G, --basic-regexp        PATTERN is a basic regular expression (default)\n"
+	"  -f, --file=FILE           obtain PATTERN from FILE\n"
 	"  -i, --ignore-case[=WHERE] ignore case distinction in PATTERN\n"
 	"                            WHERE is 'pattern', 'glob' or 'all' (default)\n"
 	"  -w, --word-regexp         force PATTERN to match only whole words\n"
+	"\n"
+	"Miscellaneous:\n"
+	"  -s, --no-messages         supress error messages\n"
+	"  -h, --help                display this help and exit\n"
+	"\n"
+	"Output control:\n"
 	"      --include=GLOB        search only files that match GLOB pattern\n"
 	"      --exclude=GLOB        skip files and directories matching GLOB pattern\n"
 	"      --exclude-from=FILE   skip files matching any file pattern from FILE\n"
-	"  -f, --file=FILE           obtain PATTERN from FILE\n"
 	"      --extended-glob       use ksh-like extended match for globbing\n"
+	"  -l, --list                only list files with potential match\n"
+	"\n"
+	"Context control:\n"
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"
 	"  -C, --context=NUM         print NUM lines of output context\n"
-	"  -l, --list                only list files with potential match\n"
 	"      --color[=WHEN],\n"
 	"      --colour[=WHEN]       use markers to highlight the matching strings;\n"
-	"                            WHEN is 'always', 'never', or 'auto' (default)\n"
-	"  -s, --no-messages         supress error messages\n"
-	"  -h, --help                display this help and exit\n",
+	"                            WHEN is 'always', 'never', or 'auto' (default)\n",
 	name);
 }
 

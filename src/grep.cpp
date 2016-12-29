@@ -1,4 +1,5 @@
 #include "grep.h"
+#include "pattern.h"
 #include "file.h"
 #include "fileline.h"
 #include <cstring>
@@ -16,8 +17,6 @@ using namespace std;
 #define COL_LINE	COL_START("32")		// green
 #define COL_SEP		COL_START("36")		// cyan
 
-#define TO_LOWER(x)		((x)>='A' && (x)<='Z' ? (x)+'a'-'A' : (x))
-
 #define IS_WORD_CHAR(x)	( \
 	((x)>='a' && (x)<='z') || \
 	((x)>='A' && (x)<='Z') || \
@@ -25,11 +24,7 @@ using namespace std;
 	((x)=='_') )
 
 
-static string &toLower(string &str);
-
-
 Grep::Grep() :
-	m_caseSensitive(true),
 	m_wholeWordMatch(false),
 	m_colorOutput(false),
 	m_beforeContext(0),
@@ -37,24 +32,15 @@ Grep::Grep() :
 	m_lastLine(0)
 {}
 
-void Grep::addPattern(const string &pattern)
+Grep::~Grep()
 {
-	if (m_caseSensitive)
-	{
-		m_patterns.push_back(pattern);
-	}
-	else
-	{
-		string p = pattern;
-		m_patterns.push_back(toLower(p));
-	}
+	for (Pattern *pattern : m_patterns)
+		delete pattern;
 }
 
-void Grep::caseInsensitive()
+void Grep::addPattern(Pattern *pattern)
 {
-	m_caseSensitive = false;
-	for (string &pattern : m_patterns)
-		toLower(pattern);
+	m_patterns.push_back(pattern);
 }
 
 void Grep::wholeWordMatch(bool wholeWord)
@@ -91,7 +77,7 @@ bool Grep::grepFile(const string &fname)
 
 	while ((line = file.readLine(false)) != NULL)
 	{
-		Match match = matchStr(line);
+		Pattern::Match match = matchStr(line, true);
 
 		if (match.pos)
 		{
@@ -127,58 +113,25 @@ bool Grep::grepFile(const string &fname)
 	return lastMatch;
 }
 
-const char *Grep::matchStr(const char *str, const string &matchPattern) const
+Pattern::Match Grep::matchStr(const char *str, bool wholeLine) const
 {
-	const char *res = NULL;
-	const char *pattern = matchPattern.c_str();
+	Pattern::Match firstMatch;
 
-	if (m_caseSensitive)
+	for (Pattern *pattern : m_patterns)
 	{
-		res = strstr(str, pattern);
-	}
-	else
-	{
-		const char *p = pattern;
-		for (const char *s = str; *s != '\0'; s++)
+		Pattern::Match match = pattern->match(str, wholeLine);
+		if (match.pos && (firstMatch.pos == NULL || match.pos < firstMatch.pos))
 		{
-			if (TO_LOWER(*s) == *p)
+			if (m_wholeWordMatch)
 			{
-				if (*++p == '\0')
-				{
-					res = s - (p - pattern - 1);
-					break;
-				}
+				if ((match.pos > str) && IS_WORD_CHAR(match.pos[-1]))
+					continue;
+
+				if (IS_WORD_CHAR(match.pos[match.len]))
+					continue;
 			}
-			else
-			{
-				p = pattern;
-			}
-		}
-	}
 
-	if (res && m_wholeWordMatch)
-	{
-		if ((res > str) && IS_WORD_CHAR(res[-1]))
-			return NULL;
-
-		if (IS_WORD_CHAR(res[matchPattern.size()]))
-			return NULL;
-	}
-
-	return res;
-}
-
-Grep::Match Grep::matchStr(const char *str) const
-{
-	Match firstMatch;
-
-	for (const string &pattern : m_patterns)
-	{
-		const char *match = matchStr(str, pattern);
-		if ((match) && (firstMatch.pos == NULL || match < firstMatch.pos))
-		{
-			firstMatch.pos = match;
-			firstMatch.len = pattern.size();
+			firstMatch = match;
 		}
 	}
 
@@ -186,9 +139,9 @@ Grep::Match Grep::matchStr(const char *str) const
 }
 
 void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
-		const Match &firstMatch)
+		const Pattern::Match &firstMatch)
 {
-	Match match = firstMatch;
+	Pattern::Match match = firstMatch;
 	char sep = match.pos ? ':' : '-';
 
 	if (m_beforeContext || m_afterContext)
@@ -211,7 +164,7 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 					(int)match.len, match.pos);
 
 			line = match.pos + match.len;
-			match = matchStr(line);
+			match = matchStr(line, false);
 		}
 
 		printf("%s\n", line);
@@ -220,15 +173,4 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 	{
 		printf("%s%c%u%c%s\n", fname, sep, lineNo, sep, line);
 	}
-}
-
-Grep::Match::Match() : pos(NULL), len(0)
-{}
-
-string &toLower(string &str)
-{
-	for (size_t i = 0; i < str.length(); i++)
-		str[i] = TO_LOWER(str[i]);
-
-	return str;
 }

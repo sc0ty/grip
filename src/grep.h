@@ -4,15 +4,16 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include "pattern.h"
 
 
 class Grep
 {
 	public:
 		Grep();
+		~Grep();
 
-		void addPattern(const std::string &pattern);
-		void caseInsensitive();
+		void addPattern(Pattern *pattern);
 		void wholeWordMatch(bool wholeWord);
 
 		void outputFormat(bool color);
@@ -23,25 +24,15 @@ class Grep
 		bool grepFile(const std::string &fname);
 
 	private:
-		struct Match
-		{
-			const char *pos;
-			size_t len;
-
-			Match();
-		};
-
-		const char *matchStr(const char *str, const std::string &pattern) const;
-		Match matchStr(const char *str) const;
+		Pattern::Match matchStr(const char *str, bool wholeLine) const;
 
 		void printMatch(const char *fname, unsigned lineNo, const char *line,
-				const Match &firstMatch = Match());
+				const Pattern::Match &firstMatch = Pattern::Match());
 
 	private:
-		std::vector<std::string> m_patterns;
-		unsigned m_caseSensitive : 1;
-		unsigned m_wholeWordMatch : 1;
-		unsigned m_colorOutput : 1;
+		std::vector<Pattern*> m_patterns;
+		bool m_wholeWordMatch;
+		bool m_colorOutput;
 
 		unsigned m_beforeContext;
 		unsigned m_afterContext;

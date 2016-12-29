@@ -14,7 +14,7 @@ TARGETS = \
 
 SOURCES = \
 		  indexer.cpp \
-		  finder.cpp \
+		  dbreader.cpp \
 		  sortdb.cpp \
 		  filelist.cpp \
 		  ids.cpp \
@@ -25,11 +25,13 @@ SOURCES = \
 		  print.cpp \
 		  dir.cpp \
 		  glob.cpp \
+		  pattern.cpp \
+		  node.cpp \
 		  error.cpp \
 
 HEADERS = \
 		  indexer.h \
-		  finder.h \
+		  dbreader.h \
 		  filelist.h \
 		  ids.h \
 		  compressedids.h \
@@ -40,7 +42,10 @@ HEADERS = \
 		  print.h \
 		  dir.h \
 		  glob.h \
+		  pattern.h \
 		  globfilters.def \
+		  node.h \
+		  case.h \
 		  config.h \
 		  error.h \
 
