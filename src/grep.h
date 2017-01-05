@@ -14,7 +14,9 @@ class Grep
 		~Grep();
 
 		void addPattern(Pattern *pattern);
-		void wholeWordMatch(bool wholeWord);
+
+		enum MatchMode { MATCH_DEFAULT, MATCH_WHOLE_WORD, MATCH_WHOLE_LINE };
+		void matchMode(MatchMode mode);
 
 		void outputFormat(bool color);
 
@@ -31,7 +33,7 @@ class Grep
 
 	private:
 		std::vector<Pattern*> m_patterns;
-		bool m_wholeWordMatch;
+		MatchMode m_matchMode;
 		bool m_colorOutput;
 
 		unsigned m_beforeContext;

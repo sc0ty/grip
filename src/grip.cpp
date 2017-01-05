@@ -45,6 +45,7 @@ static struct option const LONGOPTS[] =
 	{"list", no_argument, NULL, 'l'},
 	{"no-messages", no_argument, NULL, 's'},
 	{"word-regexp", no_argument, NULL, 'w'},
+	{"line-regexp", no_argument, NULL, 'x'},
 
 #define GLOB_TYPE_FILTER(id, name, ...) \
 	{#name, no_argument, NULL, GLOB_TYPE_OPTIONS + id*2}, \
@@ -55,7 +56,7 @@ static struct option const LONGOPTS[] =
 	{NULL, 0, NULL, 0}
 };
 
-static char const SHORTOPTS[] = "A:B:C:EFf:Ghilsw0123456789";
+static char const SHORTOPTS[] = "A:B:C:EFf:Ghilswx0123456789";
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
@@ -152,7 +153,11 @@ int main(int argc, char * const argv[])
 					break;
 
 				case 'w':
-					grep.wholeWordMatch(true);
+					grep.matchMode(Grep::MATCH_WHOLE_WORD);
+					break;
+
+				case 'x':
+					grep.matchMode(Grep::MATCH_WHOLE_LINE);
 					break;
 
 				case EXCLUDE_OPTION:
@@ -308,6 +313,7 @@ void usage(const char *name)
 	"  -i, --ignore-case[=WHERE] ignore case distinction in PATTERN\n"
 	"                            WHERE is 'pattern', 'glob' or 'all' (default)\n"
 	"  -w, --word-regexp         force PATTERN to match only whole words\n"
+	"  -x, --line-regexp         force PATTERN to match only whole lines\n"
 	"\n"
 	"Miscellaneous:\n"
 	"  -s, --no-messages         supress error messages\n"

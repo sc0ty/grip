@@ -25,7 +25,7 @@ using namespace std;
 
 
 Grep::Grep() :
-	m_wholeWordMatch(false),
+	m_matchMode(MATCH_DEFAULT),
 	m_colorOutput(false),
 	m_beforeContext(0),
 	m_afterContext(0),
@@ -43,9 +43,9 @@ void Grep::addPattern(Pattern *pattern)
 	m_patterns.push_back(pattern);
 }
 
-void Grep::wholeWordMatch(bool wholeWord)
+void Grep::matchMode(MatchMode mode)
 {
-	m_wholeWordMatch = wholeWord;
+	m_matchMode = mode;
 }
 
 void Grep::outputFormat(bool color)
@@ -122,7 +122,15 @@ Pattern::Match Grep::matchStr(const char *str, bool wholeLine) const
 		Pattern::Match match = pattern->match(str, wholeLine);
 		if (match.pos && (firstMatch.pos == NULL || match.pos < firstMatch.pos))
 		{
-			if (m_wholeWordMatch)
+			if (m_matchMode == MATCH_WHOLE_LINE)
+			{
+				if (!wholeLine)
+					break;
+
+				if ((str != match.pos) || (strlen(str) != match.len))
+					break;
+			}
+			else if (m_matchMode == MATCH_WHOLE_WORD)
 			{
 				if ((match.pos > str) && IS_WORD_CHAR(match.pos[-1]))
 					continue;
