@@ -55,7 +55,7 @@ static struct option const LONGOPTS[] =
 	{NULL, 0, NULL, 0}
 };
 
-static char const SHORTOPTS[] = "A:B:C:EFf:Ghilsw";
+static char const SHORTOPTS[] = "A:B:C:EFf:Ghilsw0123456789";
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
@@ -78,6 +78,7 @@ int main(int argc, char * const argv[])
 
 		Grep grep;
 		grep.outputFormat(isatty(STDOUT_FILENO));
+		unsigned context = 0;
 
 		Glob glob;
 
@@ -87,6 +88,13 @@ int main(int argc, char * const argv[])
 		int opt;
 		while ((opt = getopt_long(argc, argv, SHORTOPTS, LONGOPTS, NULL)) != -1)
 		{
+			if (opt >= '0' && opt <= '9')
+			{
+				context *= 10;
+				context += opt - '0';
+				continue;
+			}
+
 			switch (opt)
 			{
 				case 'A':
@@ -187,6 +195,12 @@ int main(int argc, char * const argv[])
 					usage(argv[0]);
 					return 0;
 			}
+		}
+
+		if (context > 0)
+		{
+			grep.setBeforeContext(context);
+			grep.setAfterContext(context);
 		}
 
 		for (int i = optind; i < argc; i++)
@@ -310,6 +324,7 @@ void usage(const char *name)
 	"  -B, --before-context=NUM  print NUM lines of leading context\n"
 	"  -A, --after-context=NUM   print NUM lines of trailing context\n"
 	"  -C, --context=NUM         print NUM lines of output context\n"
+	"  -NUM                      same as --context=NUM\n"
 	"      --color[=WHEN],\n"
 	"      --colour[=WHEN]       use markers to highlight the matching strings;\n"
 	"                            WHEN is 'always', 'never', or 'auto' (default)\n",
