@@ -3,5 +3,7 @@
 *.vim
 .grip
 grip
+egrip
+fgrip
 gripgen
 tags

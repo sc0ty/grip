@@ -27,9 +27,12 @@ enum
 
 static struct option const LONGOPTS[] =
 {
+#ifndef USE_MATCHER
 	{"extended-regex", no_argument, NULL, 'E'},
 	{"fixed-strings", no_argument, NULL, 'F'},
 	{"basic-regex", no_argument, NULL, 'G'},
+#endif
+
 	{"after-context", required_argument, NULL, 'A'},
 	{"before-context", required_argument, NULL, 'B'},
 	{"context", required_argument, NULL, 'C'},
@@ -56,7 +59,11 @@ static struct option const LONGOPTS[] =
 	{NULL, 0, NULL, 0}
 };
 
-static char const SHORTOPTS[] = "A:B:C:EFf:Ghilswx0123456789";
+static char const SHORTOPTS[] =
+#ifndef USE_MATCHER
+	"EFG"
+#endif
+	"A:B:C:f:hilswx0123456789";
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
@@ -71,8 +78,13 @@ int main(int argc, char * const argv[])
 		string cwd = getCurrentDirectory();
 
 		vector<string> patterns;
-		Pattern::Mode mode = Pattern::BASIC;
 		bool caseSensitivePatterns = true;
+
+#ifdef USE_MATCHER
+		Pattern::Mode mode = USE_MATCHER;
+#else
+		Pattern::Mode mode = Pattern::BASIC;
+#endif
 
 		DbReader database(dbdir);
 		Ids ids;
@@ -132,6 +144,7 @@ int main(int argc, char * const argv[])
 						glob.caseSensitive(false);
 					break;
 
+#ifndef USE_MATCHER
 				case 'E':
 					mode = Pattern::EXTENDED;
 					break;
@@ -143,6 +156,7 @@ int main(int argc, char * const argv[])
 				case 'G':
 					mode = Pattern::BASIC;
 					break;
+#endif
 
 				case 'l':
 					listOnly = true;
@@ -306,9 +320,11 @@ void usage(const char *name)
 	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
 	"Regexp selection and interpretation:\n"
+#ifndef USE_MATCHER
 	"  -E, --extended-regexp     PATTERN is an extended regular expression\n"
 	"  -F, --fixed-strings       PATTERN is a strings\n"
 	"  -G, --basic-regexp        PATTERN is a basic regular expression (default)\n"
+#endif
 	"  -f, --file=FILE           obtain PATTERN from FILE\n"
 	"  -i, --ignore-case[=WHERE] ignore case distinction in PATTERN\n"
 	"                            WHERE is 'pattern', 'glob' or 'all' (default)\n"

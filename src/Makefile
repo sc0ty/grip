@@ -10,6 +10,8 @@ LDFLAGS ?= \
 
 TARGETS = \
 		  grip \
+		  egrip \
+		  fgrip \
 		  gripgen \
 
 SOURCES = \
@@ -72,6 +74,12 @@ $(TARGETS): %: $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^
 
 grip: grip.o
+
+egrip: egrip.o
+egrip.o: grip.cpp
+
+fgrip: fgrip.o
+fgrip.o: grip.cpp
 
 gripgen: gripgen.o
 
