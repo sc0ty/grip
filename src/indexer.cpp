@@ -10,21 +10,11 @@ using namespace std;
 
 static const size_t initBufferSize = 32 * 1024;
 
+#define TRIGRAMS_NO 0x1000000
+
 
 void sortDatabase(File &oldIdxFile, File &oldDataFile, File &newIdxFile,
 		File &newDataFile);
-
-
-inline static bool isBinaryData(uint8_t *data, size_t size)
-{
-	for (size_t i = 0; i < size; i++)
-	{
-		if (data[i] == 0)
-			return true;
-	}
-
-	return false;
-}
 
 
 Indexer::Indexer(size_t bufferSize)
@@ -34,6 +24,8 @@ Indexer::Indexer(size_t bufferSize)
 		bufferSize = initBufferSize;
 
 	m_buffer.resize(bufferSize);
+	m_ids = new CompressedIds*[TRIGRAMS_NO];
+	memset(m_ids, 0, TRIGRAMS_NO*sizeof(CompressedIds*));
 }
 
 void Indexer::open(const string &dir)
@@ -56,6 +48,9 @@ Indexer::~Indexer()
 {
 	if (m_size > 0)
 		write();
+
+	freeIds();
+	delete [] m_ids;
 }
 
 bool Indexer::indexFile(const string &fname)
@@ -70,14 +65,14 @@ bool Indexer::indexFile(const string &fname)
 
 	// first check only small fragment of file
 	size_t size = file.readN(data, 1, initBufferSize, false);
-	if (isBinaryData(data, size))
+	if (memchr(data, 0, size))
 		return false;
 
 	// fill the buffer and check the remaining fragment
 	if (!file.eof())
 	{
 		size_t read = file.readN(data+size, 1, m_buffer.size()-size, false);
-		if (isBinaryData(data+size, read))
+		if (memchr(data+size, 0, read))
 			return false;
 
 		size += read;
@@ -132,7 +127,23 @@ uint32_t Indexer::addFile(const std::string &fname)
 
 void Indexer::addTrigram(uint32_t trigram, uint32_t fileId)
 {
-	m_size += m_trigrams[trigram & 0x00ffffff].add(fileId);
+	CompressedIds **ids = m_ids + (trigram & 0x00ffffff);
+	if (*ids == NULL)
+		*ids = new CompressedIds();
+
+	m_size += (*ids)->add(fileId);
+}
+
+void Indexer::freeIds()
+{
+	for (uint32_t trigram = 0; trigram < TRIGRAMS_NO; trigram++)
+	{
+		if (m_ids[trigram] != NULL)
+		{
+			delete m_ids[trigram];
+			m_ids[trigram] = NULL;
+		}
+	}
 }
 
 void Indexer::write()
@@ -143,21 +154,20 @@ void Indexer::write()
 	Index index;
 	index.offset = m_dataFile.tell();
 
-	for (Trigrams::iterator it = m_trigrams.begin();
-			it != m_trigrams.end(); ++it)
+	for (uint32_t trigram = 0; trigram < TRIGRAMS_NO; trigram++)
 	{
-		CompressedIds &ids = it->second;
-		if (ids.empty())
+		CompressedIds *ids = m_ids[trigram];
+		if (ids == NULL || ids->empty())
 			continue;
 
-		index.trigram = it->first;
-		index.lastId = ids.lastId();
-		index.size = ids.size();
+		index.trigram = trigram;
+		index.lastId = ids->lastId();
+		index.size = ids->size();
 
 		m_idxFile.writeObj(index);
-		m_dataFile.write(ids.getData(), index.size);
+		m_dataFile.write(ids->getData(), index.size);
 
-		ids.clearChunk();
+		ids->clearChunk();
 		index.offset += index.size;
 	}
 
@@ -171,8 +181,7 @@ void Indexer::write()
 void Indexer::sortDatabase()
 {
 	write();
-
-	m_trigrams.clear();
+	freeIds();
 
 	File newIdxFile(TRIGRAMS_LIST_PATH, "w");
 	File newDataFile(TRIGRAMS_DATA_PATH, "w");

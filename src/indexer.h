@@ -2,7 +2,6 @@
 #define __INDEXER_H__
 
 #include <vector>
-#include <map>
 #include <string>
 #include <stdint.h>
 #include "file.h"
@@ -31,10 +30,10 @@ class Indexer
 	private:
 		uint32_t addFile(const std::string &fname);
 		void addTrigram(uint32_t trigram, uint32_t fileId);
+		void freeIds();
 
 	private:
-		typedef std::map<uint32_t /* trigram */, CompressedIds> Trigrams;
-		Trigrams m_trigrams;
+		CompressedIds **m_ids;
 		size_t m_size;
 		size_t m_filesTotalSize;
 		size_t m_chunksSize;
