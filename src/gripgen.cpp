@@ -183,6 +183,7 @@ int main(int argc, char * const argv[])
 		if (verbose >= 1)
 			reprint("sorting chunks database...");
 
+		files.close();
 		indexer.sortDatabase();
 		chunksNo++;
 
