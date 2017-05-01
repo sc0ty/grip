@@ -114,7 +114,6 @@ int main(int argc, char * const argv[])
 
 		const char *fname = NULL;
 		unsigned long chunksNo = 0;
-		int id = optind;
 
 		if (verbose >= 2)
 		{
@@ -133,13 +132,7 @@ int main(int argc, char * const argv[])
 		{
 			try
 			{
-				if (id < argc)
-					fname = argv[id++];
-				else if (files.isOpen())
-					fname = files.readLine(false);
-				else
-					break;
-
+				fname = files.readLine(false);
 				if (fname == NULL)
 					break;
 
