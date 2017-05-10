@@ -1,7 +1,11 @@
 #include "fileline.h"
+#include <cstring>
 
 using namespace std;
 
+#ifndef MAX_LINE_SIZE
+#define MAX_LINE_SIZE	(16 * 1024)
+#endif
 
 
 FileLineReader::FileLineReader() : m_line(NULL), m_len(0)
@@ -57,6 +61,9 @@ bool FileLineReader::eof() const
 
 char *FileLineReader::readLine(bool throwOnEof)
 {
+
+#if defined _POSIX_C_SOURCE && _POSIX_C_SOURCE >= 200809L || defined _XOPEN_SOURCE && _XOPEN_SOURCE >= 700
+
 	ssize_t read = getline(&m_line, &m_len, m_fp);
 	if (read == -1)
 	{
@@ -70,6 +77,33 @@ char *FileLineReader::readLine(bool throwOnEof)
 		else
 			throw ThisError("read failed", errno).add("file", getFileName());
 	}
+
+#else
+#warning no POSIX getline() available, line size will be limited to MAX_LINE_SIZE characters during grip
+
+	if (m_line == NULL)
+	{
+		m_len = MAX_LINE_SIZE;
+		m_line = (char*) malloc(m_len);
+	}
+
+	char *res = fgets(m_line, m_len, m_fp);
+	if (res == NULL)
+	{
+		if (feof(m_fp))
+		{
+			if (throwOnEof)
+				throw EndOfFile(*this);
+			else
+				return NULL;
+		}
+		else
+			throw ThisError("read failed", errno).add("file", getFileName());
+	}
+
+	size_t read  = strlen(m_line);
+
+#endif
 
 	// trim new line character
 	while (read && ((m_line[read-1] == '\n') || (m_line[read-1] == '\r')))
