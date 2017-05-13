@@ -8,6 +8,26 @@ CXXFLAGS ?= \
 
 LDFLAGS ?= \
 
+ifdef STATIC
+LDFLAGS += \
+			-static \
+			-static-libgcc \
+			-static-libstdc++ \
+
+endif
+
+ifdef USE_BOOST
+CXXFLAGS += -DUSE_BOOST
+endif
+
+ifeq ($(USE_BOOST),yes)
+LDFLAGS  += -lboost_regex
+endif
+
+ifeq ($(USE_BOOST),mt)
+LDFLAGS  += -lboost_regex -pthread
+endif
+
 TARGETS = \
 		  grip \
 		  egrip \
@@ -58,7 +78,6 @@ EXTERNAL = \
 OBJECTS = $(SOURCES:.cpp=.o)
 
 TOBJECTS = $(TARGETS:=.o)
-
 
 all: release
 

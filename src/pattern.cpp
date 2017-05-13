@@ -2,8 +2,13 @@
 #include "case.h"
 #include "error.h"
 #include <sys/types.h>
-#include <regex.h>
 #include <cstring>
+
+#if defined(USE_BOOST)
+#include <boost/regex.h>
+#elif defined(_POSIX_C_SOURCE)
+#include <regex.h>
+#endif
 
 using namespace std;
 
