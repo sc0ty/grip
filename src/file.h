@@ -76,6 +76,7 @@ class File
 
 		void seek(size_t pos);
 		void seekToEnd();
+		void rewind();
 		size_t tell() const;
 		size_t size() const;
 		bool eof() const;

@@ -29,8 +29,8 @@ DbReader::DbReader(const string &dirDb)
 {
 	string dir = !dirDb.empty() ? dirDb : getIndexPath();
 
-	m_dataFile.open(dir + PATH_DELIMITER + TRIGRAMS_DATA_PATH, "r");
-	File(dir + PATH_DELIMITER + TRIGRAMS_LIST_PATH, "r").readVector(m_indexes);
+	m_dataFile.open(dir + PATH_DELIMITER + TRIGRAMS_DATA_PATH, "rb");
+	File(dir + PATH_DELIMITER + TRIGRAMS_LIST_PATH, "rb").readVector(m_indexes);
 	m_fileList.read(dir + PATH_DELIMITER + FILE_LIST_PATH);
 }
 

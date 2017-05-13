@@ -38,7 +38,7 @@ bool Files::empty() const
 
 void Files::write(const string &fname) const
 {
-	File file(fname, "w");
+	File file(fname, "wb");
 
 	for (auto &name : m_files)
 		file.writeLine(name);

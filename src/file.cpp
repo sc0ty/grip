@@ -21,7 +21,7 @@ EndOfFile::~EndOfFile()
 
 void readFile(vector<uint8_t> &res, const char *fname, size_t sizeLimit)
 {
-	File file(fname, "r");
+	File file(fname, "rb");
 	size_t size = file.size();
 	if ((size_t)size > sizeLimit)
 		throw FuncError("file size limit exceeded").add("file", fname);
@@ -126,7 +126,7 @@ size_t File::size() const
 		throw ThisError("seek failed", errno).add("file", getFileName());
 
 	long size = ftell(m_fp);
-	rewind(m_fp);
+	::rewind(m_fp);
 
 	if (size == -1)
 		throw ThisError("tell file failed", errno).add("file", getFileName());
@@ -221,6 +221,11 @@ void File::seekToEnd()
 {
 	if (fseek(m_fp, 0, SEEK_END) != 0)
 		throw ThisError("seek failed", errno).add("file", getFileName());
+}
+
+void File::rewind()
+{
+    ::rewind(m_fp);
 }
 
 size_t File::tell() const

@@ -32,9 +32,9 @@ void Indexer::open(const string &dir)
 {
 	m_dir = dir;
 	makeDirectory(dir + PATH_DELIMITER + GRIP_DIR);
-	m_idxFile.open(dir + PATH_DELIMITER + TRIGRAMS_LIST_PATH_TMP, "w+");
-	m_dataFile.open(dir + PATH_DELIMITER + TRIGRAMS_DATA_PATH_TMP, "w+");
-	m_filesFile.open(dir + PATH_DELIMITER + FILE_LIST_PATH_TMP, "w");
+	m_idxFile.open(dir + PATH_DELIMITER + TRIGRAMS_LIST_PATH_TMP, "w+b");
+	m_dataFile.open(dir + PATH_DELIMITER + TRIGRAMS_DATA_PATH_TMP, "w+b");
+	m_filesFile.open(dir + PATH_DELIMITER + FILE_LIST_PATH_TMP, "wb");
 }
 
 void Indexer::close()
@@ -55,7 +55,7 @@ Indexer::~Indexer()
 
 bool Indexer::indexFile(const string &fname)
 {
-	File file(fname, "r");
+	File file(fname, "rb");
 	size_t fileSize = file.size();
 
 	if (fileSize < 3)
@@ -183,8 +183,8 @@ void Indexer::sortDatabase()
 	write();
 	freeIds();
 
-	File newIdxFile(TRIGRAMS_LIST_PATH, "w");
-	File newDataFile(TRIGRAMS_DATA_PATH, "w");
+	File newIdxFile(TRIGRAMS_LIST_PATH, "wb");
+	File newDataFile(TRIGRAMS_DATA_PATH, "wb");
 
 	::sortDatabase(m_idxFile, m_dataFile, newIdxFile, newDataFile);
 	m_chunksSize = newDataFile.size();

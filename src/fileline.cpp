@@ -26,7 +26,7 @@ FileLineReader::~FileLineReader()
 
 void FileLineReader::open(const string &fname)
 {
-	File::open(fname, "r");
+	File::open(fname, "rb");
 }
 
 void FileLineReader::open(FILE *fp)
@@ -79,7 +79,6 @@ char *FileLineReader::readLine(bool throwOnEof)
 	}
 
 #else
-#warning no POSIX getline() available, line size will be limited to MAX_LINE_SIZE characters during grip
 
 	if (m_line == NULL)
 	{
