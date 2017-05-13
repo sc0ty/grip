@@ -28,6 +28,11 @@ ifeq ($(USE_BOOST),mt)
 LDFLAGS  += -lboost_regex -pthread
 endif
 
+ifeq ($(USE_BOOST),manual)
+CXXFLAGS += $(BOOST_CXXFLAGS)
+LDFLAGS  += $(BOOST_LDFLAGS)
+endif
+
 TARGETS = \
 		  grip \
 		  egrip \
