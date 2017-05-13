@@ -2,6 +2,7 @@
 #include "pattern.h"
 #include "file.h"
 #include "fileline.h"
+#include <cstdio>
 #include <cstring>
 #include <list>
 

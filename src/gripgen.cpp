@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 #include <climits>
 #include <unistd.h>
 #include <getopt.h>
