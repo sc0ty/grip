@@ -4,6 +4,7 @@ Indexed grep - fast search (grep like) in huge stack of files.
 Author: [Mike Szymaniak](http://sc0ty.pl)
 
 ## Features
+- support for POSIX (Linux and UNIX) and Windows (with MinGW);
 - fast search for pattern in text files;
 - intended mainly (but not limited to) source code;
 - support for Huge Blobs of Legacy Code&trade;;
@@ -23,7 +24,7 @@ Author: [Mike Szymaniak](http://sc0ty.pl)
 
 ## Requirements
 - C++11 compiler (e.g. GCC 4.8+ or Clang 3.4+);
-- POSIX-compatibile environment (tested on Ubuntu 16.04 and Debian 8).
+- POSIX-compatibile environment (tested on Ubuntu 16.04 and Debian 8) or [Boost library](http://www.boost.org) (tested on Windows 10).
 
 ## Installation
 Assuming above requirements are met
@@ -35,9 +36,14 @@ make install
 For more information see [installation guide](doc/INSTALL.md)
 
 ## Usage
-First we need to generate index database
+First we need to generate index database.
+Under POSIX system:
 ```
 find -type f | gripgen
+```
+Or under Windows:
+```
+dir /b /s /a:-d | gripgen
 ```
 It will create database directory `.grip`. Binary files (these containing zero byte) will be ignored.
 In case of great number of files, this step will take some time. Indexer typically process 100 to 1000 files per second, and the resulting database size will be about 10% of the indexed data.
