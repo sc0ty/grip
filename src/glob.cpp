@@ -1,7 +1,10 @@
 #include "glob.h"
 #include "dir.h"
 #include "error.h"
-#include <fnmatch.h>
+
+#if !defined(_POSIX_C_SOURCE)
+#include "external/fnmatch.c"
+#endif
 
 
 using namespace std;
@@ -22,31 +25,26 @@ void Glob::addIncludePattern(const string &pattern)
 
 void Glob::caseSensitive(bool enable)
 {
-#if defined(FNM_CASEFOLD) || defined(FORCE_FNM_CASEFOLD) || defined(FORCE_GNU)
+#if defined(FNM_CASEFOLD)
 	// only available with GNU fnmatch extension
 	if (enable)
 		m_flags &= ~FNM_CASEFOLD;
 	else
 		m_flags |= FNM_CASEFOLD;
-#else
-	(void)enable;
-#warning No GNU fnmatch extension, case-insensitive globbing disabled
-#warning Use FORCE_FNM_CASEFOLD or FORCE_GNU to override
 #endif
 }
 
 void Glob::extendedMatch(bool enable)
 {
-#if defined(FNM_EXTMATCH) || defined(FORCE_FNM_EXTMATCH) || defined(FORCE_GNU)
+#if defined(FNM_EXTMATCH)
 	// only available with GNU fnmatch extension
 	if (enable)
 		m_flags |= FNM_EXTMATCH;
 	else
 		m_flags &= ~FNM_EXTMATCH;
 #else
-	(void)enable;
-#warning No GNU fnmatch extension, extended match globbing disabled
-#warning Use FORCE_FNM_EXTMATCH or FORCE_GNU to override
+	(void) enable;
+	throw ThisError("extended globbing not supported");
 #endif
 }
 

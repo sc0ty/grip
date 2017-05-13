@@ -44,7 +44,9 @@ static struct option const LONGOPTS[] =
 	{"exclude-from", required_argument, NULL, EXCLUDE_FROM_OPTION},
 	{"file", required_argument, NULL, 'f'},
 	{"include", required_argument, NULL, INCLUDE_OPTION},
+#if defined(FNM_EXTMATCH)
 	{"extended-glob", no_argument, NULL, EXTENDED_GLOB_OPTION},
+#endif
 	{"list", no_argument, NULL, 'l'},
 	{"no-messages", no_argument, NULL, 's'},
 	{"word-regexp", no_argument, NULL, 'w'},
@@ -186,9 +188,11 @@ int main(int argc, char * const argv[])
 					glob.addIncludePattern(optarg);
 					break;
 
+#if defined(FNM_EXTMATCH)
 				case EXTENDED_GLOB_OPTION:
 					glob.extendedMatch(true);
 					break;
+#endif
 
 #define GLOB_TYPE_FILTER(id, name, ...) \
 				case GLOB_TYPE_OPTIONS + id*2: \
@@ -339,7 +343,9 @@ void usage(const char *name)
 	"      --include=GLOB        search only files that match GLOB pattern\n"
 	"      --exclude=GLOB        skip files and directories matching GLOB pattern\n"
 	"      --exclude-from=FILE   skip files matching any file pattern from FILE\n"
+#if defined(FNM_EXTMATCH)
 	"      --extended-glob       use ksh-like extended match for globbing\n"
+#endif
 	"  -l, --list                only list files with potential match\n"
 	"\n"
 	"Context control:\n"

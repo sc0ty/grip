@@ -51,6 +51,10 @@ HEADERS = \
 		  config.h \
 		  error.h \
 
+EXTERNAL = \
+		  external/fnmatch.c \
+		  external/fnmatch.h \
+
 OBJECTS = $(SOURCES:.cpp=.o)
 
 TOBJECTS = $(TARGETS:=.o)
@@ -71,7 +75,7 @@ clean:
 
 
 $(TARGETS): %: $(OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $^
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 grip: grip.o
 
@@ -83,8 +87,8 @@ fgrip.o: grip.cpp
 
 gripgen: gripgen.o
 
-%.o: %.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+%.o: %.cpp $(HEADERS) $(EXTERNAL)
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 
 install: $(TARGETS)
