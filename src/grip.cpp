@@ -92,7 +92,11 @@ int main(int argc, char * const argv[])
 		Ids ids;
 
 		Grep grep;
+#if (defined(_WIN32) || defined(__WIN32__))
+		grep.outputFormat(false);
+#else
 		grep.outputFormat(isatty(STDOUT_FILENO));
+#endif
 		unsigned context = 0;
 
 		Glob glob;
