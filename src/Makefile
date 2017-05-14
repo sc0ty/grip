@@ -21,11 +21,20 @@ CXXFLAGS += -DUSE_BOOST
 endif
 
 ifeq ($(USE_BOOST),yes)
-LDFLAGS  += -lboost_regex
+LDFLAGS  += \
+			-lboost_regex \
+			-lboost_system \
+			-lboost_filesystem \
+
 endif
 
 ifeq ($(USE_BOOST),mt)
-LDFLAGS  += -lboost_regex -pthread
+LDFLAGS  += \
+			-lboost_regex \
+			-lboost_system \
+			-lboost_filesystem \
+			-pthread \
+
 endif
 
 ifeq ($(USE_BOOST),manual)
@@ -51,6 +60,8 @@ SOURCES = \
 		  fileline.cpp \
 		  print.cpp \
 		  dir.cpp \
+		  dir-posix.cpp \
+		  dir-boost.cpp \
 		  glob.cpp \
 		  pattern.cpp \
 		  node.cpp \

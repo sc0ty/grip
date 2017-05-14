@@ -253,8 +253,11 @@ int main(int argc, char * const argv[])
 
 		for (auto id : ids)
 		{
-			string filePath;
-			canonizePath(dbdir + PATH_DELIMITER + database.getFile(id), filePath);
+			string filePath = database.getFile(id);
+			if (!isAbsolutePath(filePath))
+				filePath = string(dbdir + PATH_DELIMITER) + filePath;
+			canonizePath(filePath);
+
 			if (isInDirectory(cwd, filePath) && glob.compare(filePath))
 			{
 				filePath = getRelativePath(cwd, filePath);

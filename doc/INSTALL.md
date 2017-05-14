@@ -31,7 +31,7 @@ Go to the grip directory and build it (fix directories and library name accordin
 ```
 cd src
 set BOOST_CXXFLAGS=-Ic:\Boost\include\boost-1_64
-set BOOST_LDFLAGS=-Lc:\Boost\lib -lboost_regex-mgw62-1_64
+set BOOST_LDFLAGS=-Lc:\Boost\lib -lboost_regex-mgw62-1_64 -lboost_system-mgw62-1_64 -lboost_filesystem-mgw62-1_64
 mingw32-make USE_BOOST=manual STATIC=yes
 ```
 You may need to add `-pthread` to `BOOST_LDFLAGS` if you are linking against multi-threaded boost lbrary version.

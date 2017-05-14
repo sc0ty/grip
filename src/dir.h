@@ -5,13 +5,23 @@
 
 
 #ifndef PATH_DELIMITER
-#define PATH_DELIMITER	'/'
+#if (defined(_WIN32) || defined(__WIN32__))
+#define PATH_DELIMITER      '\\'
+#define PATH_DELIMITER_S    "\\"
+#else
+#define PATH_DELIMITER      '/'
+#define PATH_DELIMITER_S    "/"
 #endif
+#endif
+
+#define IS_PATH_DELIMITER(x) ((x) == PATH_DELIMITER || (x) == '\0')
 
 
 void makeDirectory(const std::string &path);
 std::string getCurrentDirectory();
 bool directoryExists(const char *path);
+
+bool isAbsolutePath(const std::string &path);
 
 // dir and path must be canonical
 bool isInDirectory(const std::string &dir, const std::string &path);
