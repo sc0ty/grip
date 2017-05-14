@@ -3,8 +3,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+#ifdef USE_BOOST
+#include <boost/filesystem.hpp>
+using namespace boost;
+#else
 #include <unistd.h>
 #include <sys/stat.h>
+#endif
 
 using namespace std;
 
@@ -30,6 +36,39 @@ void readFile(vector<uint8_t> &res, const char *fname, size_t sizeLimit)
 	file.read(res.data(), size);
 }
 
+#ifdef USE_BOOST
+
+void File::remove(const string &fname, bool ignoreNonExisting)
+{
+	(void) ignoreNonExisting;
+	try
+	{
+		filesystem::remove(fname);
+	}
+	catch (const filesystem::filesystem_error &ex)
+	{
+		throw FuncError("cannot remove file")
+			.add("message", ex.what())
+			.add("file", fname);
+	}
+}
+
+void File::rename(const std::string &name, const std::string &newName)
+{
+	try
+	{
+		filesystem::rename(name, newName);
+	}
+	catch (const filesystem::filesystem_error &ex)
+	{
+		throw FuncError("cannot rename file")
+			.add("message", ex.what())
+			.add("file", name)
+			.add("newFile", newName);
+	}
+}
+
+#else
 
 void File::remove(const string &fname, bool ignoreNonExisting)
 {
@@ -47,6 +86,8 @@ void File::rename(const std::string &name, const std::string &newName)
 			.add("file", name)
 			.add("newFile", newName);
 }
+
+#endif
 
 File::File() : m_fp(NULL)
 {}
@@ -225,7 +266,7 @@ void File::seekToEnd()
 
 void File::rewind()
 {
-    ::rewind(m_fp);
+	::rewind(m_fp);
 }
 
 size_t File::tell() const
