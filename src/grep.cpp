@@ -6,23 +6,39 @@
 #include <cstring>
 #include <list>
 
-using namespace std;
+#if (defined(_WIN32) || defined(__WIN32__))
 
+#include <windows.h>
+static HANDLE console = NULL;
+static WORD oldColors = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+
+/* colors under Windows */
+#define COL_MATCH	(FOREGROUND_RED | FOREGROUND_INTENSITY)
+#define COL_FILE	(FOREGROUND_RED | FOREGROUND_BLUE)
+#define COL_LINE	(FOREGROUND_GREEN)
+#define COL_SEP		(FOREGROUND_GREEN | FOREGROUND_BLUE)
+#define COL_END     (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
+
+#else
 
 #define COL_START(col) "\33[" col "m\33[K"
 #define COL_END        "\33[m\33[K"
 
-/* colors from grep command */
+/* ASCII colors from grep command */
 #define COL_MATCH	COL_START("01;31")	// bold red
 #define COL_FILE	COL_START("35")		// magenta
 #define COL_LINE	COL_START("32")		// green
 #define COL_SEP		COL_START("36")		// cyan
+
+#endif
 
 #define IS_WORD_CHAR(x)	( \
 	((x)>='a' && (x)<='z') || \
 	((x)>='A' && (x)<='Z') || \
 	((x)>='0' && (x)<='9') || \
 	((x)=='_') )
+
+using namespace std;
 
 
 Grep::Grep() :
@@ -31,7 +47,17 @@ Grep::Grep() :
 	m_beforeContext(0),
 	m_afterContext(0),
 	m_lastLine(0)
-{}
+{
+#if (defined(_WIN32) || defined(__WIN32__))
+	if (console == NULL)
+	{
+		console = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO screenInfo;
+		if (GetConsoleScreenBufferInfo(console, &screenInfo))
+			oldColors = screenInfo.wAttributes;
+	}
+#endif
+}
 
 Grep::~Grep()
 {
@@ -150,36 +176,105 @@ Pattern::Match Grep::matchStr(const char *str, bool wholeLine) const
 void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 		const Pattern::Match &firstMatch)
 {
-	Pattern::Match match = firstMatch;
-	char sep = match.pos ? ':' : '-';
-
 	if (m_beforeContext || m_afterContext)
 	{
 		if (m_lastLine && (m_lastLine+1 != lineNo))
-			puts(m_colorOutput ? COL_SEP "--" COL_END : "--");
+			printSepLine();
 
 		m_lastLine = lineNo;
 	}
 
+	Pattern::Match match = firstMatch;
+	printFileLine(fname, lineNo, match.pos ? ':' : '-');
+
+	while (match.pos)
+	{
+		printf("%.*s", (int)(match.pos-line), line);
+		printMatch(match);
+
+		line = match.pos + match.len;
+		match = matchStr(line, false);
+	}
+
+	printf("%s\n", line);
+}
+
+#if (defined(_WIN32) || defined(__WIN32__))
+
+void Grep::printSepLine()
+{
+	if (m_colorOutput)
+	{
+		SetConsoleTextAttribute(console, COL_SEP);
+		puts("--");
+		SetConsoleTextAttribute(console, oldColors);
+	}
+	else
+	{
+		puts("--");
+	}
+}
+
+void Grep::printFileLine(const char *fname, unsigned lineNo, char sep)
+{
+	if (m_colorOutput)
+	{
+		SetConsoleTextAttribute(console, COL_FILE);
+		printf("%s", fname);
+		SetConsoleTextAttribute(console, COL_SEP);
+		putchar(sep);
+		SetConsoleTextAttribute(console, COL_LINE);
+		printf("%u", lineNo);
+		SetConsoleTextAttribute(console, COL_SEP);
+		putchar(sep);
+		SetConsoleTextAttribute(console, oldColors);
+	}
+	else
+	{
+		printf("%s%c%u%c", fname, sep, lineNo, sep);
+	}
+}
+
+void Grep::printMatch(const Pattern::Match &match)
+{
+	if (m_colorOutput)
+	{
+		SetConsoleTextAttribute(console, COL_MATCH);
+		printf("%.*s", (int)match.len, match.pos);
+		SetConsoleTextAttribute(console, oldColors);
+	}
+	else
+	{
+		printf("%.*s", (int)match.len, match.pos);
+	}
+}
+
+#else
+
+void Grep::printSepLine()
+{
+	puts(m_colorOutput ? COL_SEP "--" COL_END : "--");
+}
+
+void Grep::printFileLine(const char *fname, unsigned lineNo, char sep)
+{
 	if (m_colorOutput)
 	{
 		printf(COL_FILE "%s" COL_SEP "%c" COL_LINE "%u" COL_SEP "%c" COL_END,
 				fname, sep, lineNo, sep);
-
-		while (match.pos)
-		{
-			printf("%.*s" COL_MATCH "%.*s" COL_END,
-					(int)(match.pos-line), line,
-					(int)match.len, match.pos);
-
-			line = match.pos + match.len;
-			match = matchStr(line, false);
-		}
-
-		printf("%s\n", line);
 	}
 	else
 	{
-		printf("%s%c%u%c%s\n", fname, sep, lineNo, sep, line);
+		printf("%s%c%u%c", fname, sep, lineNo, sep);
 	}
 }
+
+void Grep::printMatch(const Pattern::Match &match)
+{
+	if (m_colorOutput)
+		printf(COL_MATCH "%.*s" COL_END, (int)match.len, match.pos);
+	else
+		printf("%.*s", (int)match.len, match.pos);
+}
+
+#endif

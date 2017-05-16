@@ -31,6 +31,10 @@ class Grep
 		void printMatch(const char *fname, unsigned lineNo, const char *line,
 				const Pattern::Match &firstMatch = Pattern::Match());
 
+		void printSepLine();
+		void printFileLine(const char *fname, unsigned lineNo, char sep);
+		void printMatch(const Pattern::Match &match);
+
 	private:
 		std::vector<Pattern*> m_patterns;
 		MatchMode m_matchMode;

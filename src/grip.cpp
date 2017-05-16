@@ -100,8 +100,10 @@ int main(int argc, char * const argv[])
 		Ids ids;
 
 		Grep grep;
-#ifdef _POSIX_C_SOURCE
+#if defined(_POSIX_C_SOURCE)
 		grep.outputFormat(isatty(STDOUT_FILENO));
+#elif defined(_WIN32) || defined(__WIN32__)
+		grep.outputFormat(true);
 #endif
 		unsigned context = 0;
 
