@@ -90,6 +90,10 @@ HEADERS = \
 EXTERNAL = \
 		  external/fnmatch.c \
 		  external/fnmatch.h \
+		  external/ansidecl.h \
+		  external/getopt.c \
+		  external/getopt.h \
+		  external/getopt1.c \
 
 OBJECTS = $(SOURCES:.cpp=.o)
 
