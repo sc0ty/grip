@@ -9,8 +9,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+
+#ifdef _POSIX_C_SOURCE
 #include <unistd.h>
 #include <getopt.h>
+#else
+#include "external/getopt.h"
+#include "external/getopt.c"
+#include "external/getopt1.c"
+#endif
 
 using namespace std;
 using namespace std::chrono;

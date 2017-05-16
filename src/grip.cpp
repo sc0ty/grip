@@ -9,8 +9,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+
+#ifdef _POSIX_C_SOURCE
 #include <unistd.h>
 #include <getopt.h>
+#else
+#include "external/getopt.h"
+#include "external/getopt.c"
+#include "external/getopt1.c"
+#endif
 
 using namespace std;
 
@@ -93,9 +100,7 @@ int main(int argc, char * const argv[])
 		Ids ids;
 
 		Grep grep;
-#if (defined(_WIN32) || defined(__WIN32__))
-		grep.outputFormat(false);
-#else
+#ifdef _POSIX_C_SOURCE
 		grep.outputFormat(isatty(STDOUT_FILENO));
 #endif
 		unsigned context = 0;
