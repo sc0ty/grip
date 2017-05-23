@@ -9,12 +9,15 @@ using namespace std;
 /*** CompressedIds ***/
 
 CompressedIds::CompressedIds()
-	: m_lastId(0), m_lastDelta(-1), m_lastDeltaRep(0)
+	: m_lastId(0), m_lastDelta((uint32_t) -1)
 {}
 
 unsigned CompressedIds::add(uint32_t id)
 {
 	unsigned added = 0;
+
+	if (m_lastId == (uint32_t) -1)
+		m_lastId = lastId();
 
 	if (id < m_lastId)
 		throw ThisError("out of order ID").add("ID", id).add("lastID", m_lastId);
@@ -22,18 +25,21 @@ unsigned CompressedIds::add(uint32_t id)
 	if ((id != m_lastId) || m_ids.empty())
 	{
 		uint32_t delta = id - m_lastId;
+		if (m_lastDelta == (uint32_t) -1)
+			m_lastDelta = getLastDelta();
 
-		if ((delta == m_lastDelta) && (m_lastDeltaRep < 0x3f))
+		if ((m_lastDelta != (uint32_t) -1) && (delta == m_lastDelta))
 		{
-			if (m_lastDeltaRep == 0)
+			if (m_ids.back() >= 0x40 && m_ids.back() < 0x7f)
+			{
+				m_ids.back()++;
+			}
+			else
 			{
 				m_ids.push_back(0x41);
 				added = 1;
 			}
-			else
-				m_ids.back()++;
 
-			m_lastDeltaRep++;
 			m_lastId = id;
 		}
 		else
@@ -63,7 +69,6 @@ unsigned CompressedIds::add(uint32_t id)
 
 			m_lastId = id;
 			m_lastDelta = delta;
-			m_lastDeltaRep = 0;
 		}
 	}
 
@@ -74,8 +79,7 @@ void CompressedIds::clear()
 {
 	m_ids.clear();
 	m_lastId = 0;
-	m_lastDelta = -1;
-	m_lastDeltaRep = 0;
+	m_lastDelta = (uint32_t) -1;
 }
 
 size_t CompressedIds::size() const
@@ -93,14 +97,12 @@ void CompressedIds::swap(CompressedIds &ids)
 	m_ids.swap(ids.m_ids);
 	SWAP_VAL(m_lastId, ids.m_lastId);
 	SWAP_VAL(m_lastDelta, ids.m_lastDelta);
-	SWAP_VAL(m_lastDeltaRep, ids.m_lastDeltaRep);
 }
 
 void CompressedIds::move(CompressedIds &ids)
 {
 	m_lastId = ids.m_lastId;
 	m_lastDelta = ids.m_lastDelta;
-	m_lastDeltaRep = ids.m_lastDeltaRep;
 
 	m_ids.swap(ids.m_ids);
 	ids.clear();
@@ -143,7 +145,13 @@ uint32_t CompressedIds::firstId() const
 
 uint32_t CompressedIds::lastId() const
 {
-	return m_lastId;
+	if (m_lastId != (uint32_t) -1)
+		return m_lastId;
+
+	uint32_t lastId = 0;
+	for (uint32_t id : *this)
+		lastId = id;
+	return lastId;
 }
 
 const uint8_t *CompressedIds::getData() const
@@ -154,8 +162,7 @@ const uint8_t *CompressedIds::getData() const
 uint8_t *CompressedIds::setData(size_t size, uint32_t lastId)
 {
 	m_lastId = lastId;
-	m_lastDelta = -1;
-	m_lastDeltaRep = -1;
+	m_lastDelta = (uint32_t) -1;
 
 	m_ids.resize(size);
 	return m_ids.data();
@@ -164,8 +171,7 @@ uint8_t *CompressedIds::setData(size_t size, uint32_t lastId)
 uint8_t *CompressedIds::appendData(size_t size, uint32_t lastId)
 {
 	m_lastId = lastId;
-	m_lastDelta = -1;
-	m_lastDeltaRep = -1;
+	m_lastDelta = (uint32_t) -1;
 
 	size_t pos = m_ids.size();
 	m_ids.resize(pos + size);
@@ -176,6 +182,9 @@ void CompressedIds::validate() const
 {
 	if (!m_ids.empty())
 	{
+		if ((m_ids.front() & 0xc0) == 0x40)
+			throw ThisError("malformed database, inconsistent chunk data");
+
 		if (m_ids.back() & 0x80)
 			throw ThisError("malformed database, incomplete chunk data");
 	}
@@ -184,8 +193,30 @@ void CompressedIds::validate() const
 void CompressedIds::clearChunk()
 {
 	m_ids.clear();
-	m_lastDeltaRep = 0;
 }
+
+uint32_t CompressedIds::getLastDelta() const
+{
+	if (m_ids.empty())
+		return (uint32_t) -1;
+
+	size_t pos = m_ids.size();
+
+	// skip repetitions
+	while (pos > 0 && m_ids[pos] & 0x40)
+		pos--;
+
+	uint32_t delta = m_ids[pos];
+	uint32_t offset = 6;
+	while (pos > 0 && !(m_ids[--pos] & 0x80))
+	{
+		delta |= ((uint32_t) m_ids[pos] & 0x7f) << offset;
+		offset += 7;
+	}
+
+	return delta;
+}
+
 
 CompressedIds::iterator CompressedIds::begin() const
 {

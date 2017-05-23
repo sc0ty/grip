@@ -32,8 +32,8 @@ class CompressedIds
 		uint32_t lastId() const;
 
 		const uint8_t *getData() const;
-		uint8_t *setData(size_t size, uint32_t lastId);
-		uint8_t *appendData(size_t size, uint32_t lastId);
+		uint8_t *setData(size_t size, uint32_t lastId = (uint32_t) -1);
+		uint8_t *appendData(size_t size, uint32_t lastId = (uint32_t) -1);
 		void validate() const;
 
 		void clearChunk();
@@ -77,11 +77,13 @@ class CompressedIds
 		iterator end() const;
 
 	private:
+		uint32_t getLastDelta() const;
+
+	private:
 		std::vector<uint8_t> m_ids;
 		uint32_t m_lastId;
 
 		uint32_t m_lastDelta;
-		uint32_t m_lastDeltaRep;
 };
 
 #endif
