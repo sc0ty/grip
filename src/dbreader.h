@@ -2,7 +2,7 @@
 #define __DB_READER_H__
 
 #include "index.h"
-#include "ids.h"
+#include "compressedids.h"
 #include "filelist.h"
 #include "file.h"
 #include <vector>
@@ -16,21 +16,23 @@ class DbReader
 	public:
 		DbReader(const std::string &dir = "");
 
-		const Ids &get(uint32_t trigram);
+		const CompressedIds &get(uint32_t trigram);
+		const std::vector<Index> getIndexes() const;
 
 		void clearCache();
 
 		const std::string &getFile(uint32_t id) const;
+		uint32_t getFilesNo() const;
 
 	private:
-		void readChunks(const Index &index, Ids &ids);
+		void readChunks(const Index &index, CompressedIds &ids);
 
 	private:
 		std::vector<Index> m_indexes;
 		File m_dataFile;
 		Files m_fileList;
 
-		typedef std::map<uint32_t /* trigram */, Ids> Chunks;
+		typedef std::map<uint32_t /* trigram */, CompressedIds> Chunks;
 		Chunks m_chunks;
 };
 

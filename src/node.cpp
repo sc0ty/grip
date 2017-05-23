@@ -280,7 +280,10 @@ void Node::findIds(Ids &res, const Ids &ids, DbReader &db, uint32_t trigram) con
 
 	if (gotNewTrigram)
 	{
-		const Ids &nodeIds = db.get(trigram);
+		const CompressedIds &cids = db.get(trigram);
+		Ids nodeIds;
+		cids.decompress(nodeIds);
+
 		if (!nodeIds.empty())
 		{
 			if (ids.empty())

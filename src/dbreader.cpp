@@ -34,13 +34,13 @@ DbReader::DbReader(const string &dirDb)
 	m_fileList.read(dir + PATH_DELIMITER + FILE_LIST_PATH);
 }
 
-const Ids &DbReader::get(uint32_t trigram)
+const CompressedIds &DbReader::get(uint32_t trigram)
 {
 	Chunks::const_iterator it = m_chunks.find(trigram);
 	if (it != m_chunks.end())
 		return it->second;
 
-	Ids &ids = m_chunks[trigram];
+	CompressedIds &ids = m_chunks[trigram];
 
 	size_t x = 0;
 	size_t y = m_indexes.size();
@@ -76,25 +76,32 @@ const Ids &DbReader::get(uint32_t trigram)
 	return ids;
 }
 
+const vector<Index> DbReader::getIndexes() const
+{
+	return m_indexes;
+}
+
 void DbReader::clearCache()
 {
 	m_chunks.clear();
 }
 
-void DbReader::readChunks(const Index &index, Ids &ids)
+void DbReader::readChunks(const Index &index, CompressedIds &ids)
 {
-	CompressedIds cids;
-
 	m_dataFile.seek(index.offset);
-	uint8_t *data = cids.setData(index.size, index.lastId);
+	uint8_t *data = ids.setData(index.size, index.lastId);
 	m_dataFile.read(data, index.size);
 
-	cids.validate();
-	cids.decompress(ids);
+	ids.validate();
 }
 
 const string &DbReader::getFile(uint32_t id) const
 {
 	return m_fileList.get(id);
+}
+
+uint32_t DbReader::getFilesNo() const
+{
+	return m_fileList.size();
 }
 
