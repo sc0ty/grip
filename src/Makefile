@@ -47,6 +47,7 @@ TARGETS = \
 		  egrip \
 		  fgrip \
 		  gripgen \
+		  gripdb \
 
 SOURCES = \
 		  indexer.cpp \
@@ -104,7 +105,7 @@ all: release
 debug: CXXFLAGS += -O0 -g
 debug: $(TARGETS)
 
-release: CXXFLAGS += -O2 -DNDEBUG
+release: CXXFLAGS += -O3 -DNDEBUG
 release: $(TARGETS)
 
 clean:
@@ -124,7 +125,10 @@ egrip.o: grip.cpp
 fgrip: fgrip.o
 fgrip.o: grip.cpp
 
+gripgen: LDFLAGS += -pthread
 gripgen: gripgen.o
+
+gripdb: gripdb.o
 
 %.o: %.cpp $(HEADERS) $(EXTERNAL)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
