@@ -47,7 +47,6 @@ TARGETS = \
 		  egrip \
 		  fgrip \
 		  gripgen \
-		  gripdb \
 
 SOURCES = \
 		  indexer.cpp \
@@ -125,10 +124,7 @@ egrip.o: grip.cpp
 fgrip: fgrip.o
 fgrip.o: grip.cpp
 
-gripgen: LDFLAGS += -pthread
 gripgen: gripgen.o
-
-gripdb: gripdb.o
 
 %.o: %.cpp $(HEADERS) $(EXTERNAL)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
