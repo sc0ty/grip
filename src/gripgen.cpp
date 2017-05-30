@@ -147,7 +147,7 @@ int main(int argc, char * const argv[])
 				if (strncmp(fname, GRIP_DIR, sizeof(GRIP_DIR) - 1) == 0)
 					continue;
 
-				if (strstr(fname, "/" GRIP_DIR "/"))
+				if (strstr(fname, PATH_DELIMITER_S GRIP_DIR PATH_DELIMITER_S))
 					continue;
 
 				canonizePath(fname, fileName);
