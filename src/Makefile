@@ -5,8 +5,11 @@ CXXFLAGS ?= \
 			-Wall \
 			-Wextra \
 			-pedantic \
+			-pthread \
 
 LDFLAGS ?= \
+		   --std=c++11 \
+		   -pthread \
 
 ifdef STATIC
 LDFLAGS += \
@@ -33,7 +36,6 @@ LDFLAGS  += \
 			-lboost_regex \
 			-lboost_system \
 			-lboost_filesystem \
-			-pthread \
 
 endif
 
@@ -84,6 +86,8 @@ HEADERS = \
 		  globfilters.def \
 		  node.h \
 		  case.h \
+		  queue.h \
+		  sem.h \
 		  config.h \
 		  error.h \
 

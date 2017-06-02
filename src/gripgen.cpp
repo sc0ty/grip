@@ -1,9 +1,13 @@
 #include "indexer.h"
 #include "dir.h"
 #include "fileline.h"
+#include "queue.h"
 #include "config.h"
 #include "print.h"
 #include "error.h"
+#include <thread>
+#include <mutex>
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <cstdio>
@@ -43,12 +47,19 @@ static struct option const LONGOPTS[] =
 static char const SHORTOPTS[] = "hqsuv";
 
 
-static void printProgress(const Indexer &indexer);
+static void fileListProducer(FileLineReader &files);
+static void printProgress(const Indexer &indexer, const string &fileName);
+static void printFileError(const Error &err, const char *fname);
+static void printGenericError(const Error &er);
 static void usage(const char *name);
 
 
-static string fileName;
 static steady_clock::time_point startTime, lastTime;
+static Queue<string> filesQueue;
+static mutex printMutex;
+
+static bool supressErrors = false;
+static atomic_int result;
 
 
 int main(int argc, char * const argv[])
@@ -59,11 +70,11 @@ int main(int argc, char * const argv[])
 		size_t chunkSize = 64 * 1024 * 1024;
 
 		FileLineReader files;
-		unsigned allFilesNo = 0;
 
 		int verbose = 1;
-		bool supressErrors = false;
 		bool updateIndex = false;
+
+		result = 0;
 
 		int opt;
 		while ((opt = getopt_long(argc, argv, SHORTOPTS, LONGOPTS, NULL)) != -1)
@@ -97,7 +108,7 @@ int main(int argc, char * const argv[])
 				case 'h':
 				default:
 					usage(argv[0]);
-					return 0;
+					return result;
 			}
 		}
 
@@ -120,41 +131,28 @@ int main(int argc, char * const argv[])
 			files.open(stdin);
 		}
 
-		const char *fname = NULL;
-		unsigned long chunksNo = 0;
-
 		if (verbose >= 2)
 		{
 			println("max chunk size: %lu MB",
 					(unsigned long)chunkSize / (1024*1024));
 		}
 
-
-		indexer.open();
-		startTime = lastTime = steady_clock::now();
-
 		if (verbose >= 1)
 			print("indexing...");
 
-		while (true)
+		indexer.open();
+		thread(fileListProducer, ref(files)).detach();
+		startTime = lastTime = steady_clock::now();
+
+		unsigned long chunksNo = 0;
+		string fileName;
+
+		while (filesQueue.get(fileName))
 		{
 			try
 			{
-				fname = files.readLine(false);
-				if (fname == NULL)
-					break;
-
-				if (strncmp(fname, GRIP_DIR, sizeof(GRIP_DIR) - 1) == 0)
-					continue;
-
-				if (strstr(fname, PATH_DELIMITER_S GRIP_DIR PATH_DELIMITER_S))
-					continue;
-
-				canonizePath(fname, fileName);
-				allFilesNo++;
-
 				if (verbose >= 1)
-					printProgress(indexer);
+					printProgress(indexer, fileName);
 
 				indexer.indexFile(fileName);
 
@@ -162,6 +160,7 @@ int main(int argc, char * const argv[])
 				{
 					if (verbose >= 1)
 					{
+						unique_lock<mutex> lock(printMutex);
 						reprint("writing chunks to database...");
 						lastTime = steady_clock::now();
 					}
@@ -172,17 +171,15 @@ int main(int argc, char * const argv[])
 			}
 			catch (const Error &ex)
 			{
-				if (!supressErrors)
-				{
-					reprint("%s: %s; %s", fname, ex.what(), ex.get("msg").c_str());
-					printnl();
-					lastTime = steady_clock::time_point();
-				}
+				printFileError(ex, fileName.c_str());
 			}
 		}
 
 		if (verbose >= 1)
+		{
+			unique_lock<mutex> lock(printMutex);
 			reprint("sorting chunks database...");
+		}
 
 		files.close();
 		indexer.sortDatabase();
@@ -195,13 +192,17 @@ int main(int argc, char * const argv[])
 			float bytesSec = (float)indexer.filesTotalSize() * 1000.f / duration;
 			float filesSec = (float)indexer.filesNo() * 1000.f / duration;
 
+			size_t added, removed;
+			filesQueue.getStats(added, removed);
+
+			unique_lock<mutex> lock(printMutex);
 			reprint("done");
 
-			println(" - files:    indexed %lu (%s), skipped %lu, total %lu",
-					(unsigned long)(indexer.filesNo()),
+			println(" - files:    indexed %zu (%s), skipped %zu, total %zu",
+					(indexer.filesNo()),
 					humanReadableSize(indexer.filesTotalSize()).c_str(),
-					(unsigned long)(allFilesNo - indexer.filesNo()),
-					(unsigned long)allFilesNo);
+					added - indexer.filesNo(),
+					added);
 
 			println(" - speed:    %.1f files/sec, %s/sec",
 					filesSec,
@@ -218,31 +219,94 @@ int main(int argc, char * const argv[])
 	}
 	catch (const Error &ex)
 	{
-		println("error: %s", ex.what());
-		for (auto tag : ex.tags)
-			println("\t%s: %s", tag.first.c_str(), tag.second.c_str());
-
-		return 1;
+		printGenericError(ex);
+		result = 1;
 	}
 
-	return 0;
+	filesQueue.wait();
+	return result;
 }
 
-void printProgress(const Indexer &indexer)
+void fileListProducer(FileLineReader &files)
+{
+	string fileName;
+	const char *fname;
+
+	try
+	{
+		while ((fname = files.readLine(false)) != NULL)
+		{
+			try
+			{
+				if (strncmp(fname, GRIP_DIR, sizeof(GRIP_DIR) - 1) == 0)
+					continue;
+
+				if (strstr(fname, PATH_DELIMITER_S GRIP_DIR PATH_DELIMITER_S))
+					continue;
+
+				canonizePath(fname, fileName);
+				filesQueue.put(fileName);
+			}
+			catch (const Error &ex)
+			{
+				printFileError(ex, fname);
+			}
+		}
+	}
+	catch (const Error &ex)
+	{
+		printGenericError(ex);
+		result = 2;
+	}
+
+	filesQueue.done();
+}
+
+void printProgress(const Indexer &indexer, const string &fileName)
 {
 	auto now = steady_clock::now();
 
 	if (duration_cast<milliseconds>(now - lastTime) > milliseconds(1000))
 	{
 		float duration = duration_cast<milliseconds>(now - startTime).count();
-		unsigned filesNo = indexer.filesNo();
-		float speed = (float)filesNo * 1000.f / duration;
+		size_t added, removed;
+		bool done = filesQueue.getStats(added, removed);
+		float speed = (float) indexer.filesNo() * 1000.f / duration;
 
-		reprint("indexing file %u (%.0f files/sec): %s",
-				filesNo, speed, fileName.c_str());
+		if (done)
+		{
+			float pr = (float) removed * 100.0f / (float) added;
+			unique_lock<mutex> lock(printMutex);
+			reprint("indexing file %zu/%zu %.1f%% (%.0f files/sec): %s",
+					removed, added, pr, speed, fileName.c_str());
+		}
+		else
+		{
+			unique_lock<mutex> lock(printMutex);
+			reprint("indexing file %zu/%zu+ (%.0f files/sec): %s",
+					removed, added, speed, fileName.c_str());
+		}
 
 		lastTime = now;
 	}
+}
+
+void printFileError(const Error &err, const char *fname)
+{
+	if (!supressErrors)
+	{
+		unique_lock<mutex> lock(printMutex);
+		reprint("%s: %s; %s", fname, err.what(), err.get("msg").c_str());
+		printnl();
+	}
+}
+
+void printGenericError(const Error &err)
+{
+	unique_lock<mutex> lock(printMutex);
+	println("error: %s", err.what());
+	for (auto tag : err.tags)
+		println("\t%s: %s", tag.first.c_str(), tag.second.c_str());
 }
 
 void usage(const char *name)
