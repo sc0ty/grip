@@ -1,5 +1,10 @@
 PREFIX   ?= /usr/local
 
+ifeq ($(OS),Windows_NT)
+	SUFFIX  ?= .exe
+	RM      ?= del
+endif
+
 CXXFLAGS ?= \
 			--std=c++11 \
 			-Wall \
@@ -103,32 +108,34 @@ OBJECTS = $(SOURCES:.cpp=.o)
 
 TOBJECTS = $(TARGETS:=.o)
 
+TFILES = $(TARGETS:=$(SUFFIX))
+
 all: release
 
 debug: CXXFLAGS += -O0 -g
-debug: $(TARGETS)
+debug: $(TFILES)
 
 release: CXXFLAGS += -O3 -DNDEBUG
-release: $(TARGETS)
+release: $(TFILES)
 
 clean:
-	$(RM) $(TARGETS)
+	$(RM) $(TFILES)
 	$(RM) $(TOBJECTS)
 	$(RM) $(OBJECTS)
 
 
-$(TARGETS): %: $(OBJECTS)
+$(TFILES): %: $(OBJECTS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-grip: grip.o
+grip$(SUFFIX): grip.o
 
-egrip: egrip.o
+egrip$(SUFFIX): egrip.o
 egrip.o: grip.cpp
 
-fgrip: fgrip.o
+fgrip$(SUFFIX): fgrip.o
 fgrip.o: grip.cpp
 
-gripgen: gripgen.o
+gripgen$(SUFFIX): gripgen.o
 
 %.o: %.cpp $(HEADERS) $(EXTERNAL)
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
