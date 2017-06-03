@@ -4,6 +4,7 @@
 #include "glob.h"
 #include "fileline.h"
 #include "dir.h"
+#include "print.h"
 #include "error.h"
 #include <cstring>
 #include <cstdio>
@@ -84,6 +85,8 @@ int main(int argc, char * const argv[])
 {
 	try
 	{
+		color::init();
+
 		string dbdir = getIndexPath();
 		string cwd = getCurrentDirectory();
 
@@ -100,11 +103,6 @@ int main(int argc, char * const argv[])
 		Ids ids;
 
 		Grep grep;
-#if defined(_POSIX_C_SOURCE)
-		grep.outputFormat(isatty(STDOUT_FILENO));
-#elif defined(_WIN32) || defined(__WIN32__)
-		grep.outputFormat(true);
-#endif
 		unsigned context = 0;
 
 		Glob glob;
@@ -139,9 +137,9 @@ int main(int argc, char * const argv[])
 
 				case COLOR_OPTION:
 					if ((optarg == NULL) || (strcmp(optarg, "always") == 0))
-						grep.outputFormat(true);
+						color::mode(true);
 					else if (strcmp(optarg, "never") == 0)
-						grep.outputFormat(false);
+						color::mode(false);
 					break;
 
 				case 'f':

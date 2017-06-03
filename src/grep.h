@@ -18,8 +18,6 @@ class Grep
 		enum MatchMode { MATCH_DEFAULT, MATCH_WHOLE_WORD, MATCH_WHOLE_LINE };
 		void matchMode(MatchMode mode);
 
-		void outputFormat(bool color);
-
 		void setBeforeContext(unsigned linesNo);
 		void setAfterContext(unsigned linesNo);
 
@@ -38,7 +36,6 @@ class Grep
 	private:
 		std::vector<Pattern*> m_patterns;
 		MatchMode m_matchMode;
-		bool m_colorOutput;
 
 		unsigned m_beforeContext;
 		unsigned m_afterContext;
