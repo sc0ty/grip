@@ -2,7 +2,7 @@ PREFIX   ?= /usr/local
 
 ifeq ($(OS),Windows_NT)
 	SUFFIX  ?= .exe
-	RM      ?= del
+	RM      = del /Q
 endif
 
 CXXFLAGS ?= \
@@ -141,11 +141,11 @@ gripgen$(SUFFIX): gripgen.o
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 
-install: $(TARGETS)
+install: $(TFILES)
 	install -m 0755 $^ $(PREFIX)/bin
 
 uninstall:
-	$(RM) $(addprefix $(PREFIX)/bin/, $(TARGETS))
+	$(RM) $(addprefix $(PREFIX)/bin/, $(TFILES))
 
 
 .PHONY: all clean debug release install uninstall

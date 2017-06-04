@@ -1,4 +1,5 @@
 #include "print.h"
+#include <cstdio>
 #include <cstdarg>
 #include <cassert>
 
