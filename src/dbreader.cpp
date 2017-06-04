@@ -42,36 +42,32 @@ const CompressedIds &DbReader::get(uint32_t trigram)
 
 	CompressedIds &ids = m_chunks[trigram];
 
-	size_t x = 0;
-	size_t y = m_indexes.size();
-	size_t pos = y / 2;
-	Index *data = m_indexes.data();
+	size_t low = 0;
+	size_t high = m_indexes.size();
+	const Index *data = m_indexes.data();
 
-	while (x + 1 < y)
+	while (low <= high)
 	{
-		uint32_t val = data[pos].trigram;
+		size_t mid = (low + high) / 2;
+		uint32_t val = data[mid].trigram;
 
 		if (trigram < val)
 		{
-			y = pos;
-			pos = x + (y - x) / 2;
+			if (mid == 0)
+				break;
+
+			high = mid - 1;
 		}
 		else if (trigram > val)
 		{
-			x = pos;
-			pos = x + (y - x) / 2;
+			low = mid + 1;
 		}
 		else
 		{
-			readChunks(data[pos], ids);
+			readChunks(data[mid], ids);
 			return ids;
 		}
 	}
-
-	if (data[x].trigram == trigram)
-		readChunks(data[x], ids);
-	else if (data[y].trigram == trigram)
-		readChunks(data[y], ids);
 
 	return ids;
 }
