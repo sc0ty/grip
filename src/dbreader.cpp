@@ -41,9 +41,11 @@ const CompressedIds &DbReader::get(uint32_t trigram)
 		return it->second;
 
 	CompressedIds &ids = m_chunks[trigram];
+	if (m_indexes.empty())
+		return ids;
 
 	size_t low = 0;
-	size_t high = m_indexes.size();
+	size_t high = m_indexes.size() - 1;
 	const Index *data = m_indexes.data();
 
 	while (low <= high)
