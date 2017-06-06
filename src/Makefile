@@ -2,7 +2,7 @@ PREFIX   ?= /usr/local
 
 ifeq ($(OS),Windows_NT)
 	SUFFIX  ?= .exe
-	RM      = del /Q
+	RM      = cmd /C del /Q
 endif
 
 CXXFLAGS ?= \
@@ -49,7 +49,7 @@ CXXFLAGS += $(BOOST_CXXFLAGS)
 LDFLAGS  += $(BOOST_LDFLAGS)
 endif
 
-VERSION  ?= $(shell git describe --tags 2>/dev/null)
+VERSION  ?= $(shell git describe --tags)
 ifneq ($(VERSION), )
 	CXXFLAGS += -DVERSION=\"$(VERSION)\"
 endif
