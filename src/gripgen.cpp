@@ -41,10 +41,11 @@ static struct option const LONGOPTS[] =
 	{"silent", no_argument, NULL, 'q'},
 	{"no-messages", no_argument, NULL, 's'},
 	{"help", no_argument, NULL, 'h'},
+	{"version", no_argument, NULL, 'V'},
 	{NULL, 0, NULL, 0}
 };
 
-static char const SHORTOPTS[] = "hqsuv";
+static char const SHORTOPTS[] = "hqsuvV";
 
 
 static void fileListProducer(FileLineReader &files);
@@ -52,6 +53,7 @@ static void printProgress(const Indexer &indexer, const string &fileName);
 static void printFileError(const Error &err, const char *fname);
 static void printGenericError(const Error &er);
 static void usage(const char *name);
+static void version(const char *name);
 
 
 static steady_clock::time_point startTime, lastTime;
@@ -103,6 +105,11 @@ int main(int argc, char * const argv[])
 
 				case CHUNK_SIZE_OPTION:
 					chunkSize = atol(optarg) * 1024 * 1024;
+					break;
+
+				case 'V':
+					version(argv[0]);
+					return 0;
 					break;
 
 				case 'h':
@@ -313,7 +320,6 @@ void usage(const char *name)
 {
 	printf("Usage: %s [OPTIONS] [LIST]\n"
 	"Generate index for grip\n"
-	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
 	"Options:\n"
 	"  -u, --update              update existing index (reindex file)\n"
@@ -326,6 +332,18 @@ void usage(const char *name)
 	"LIST is file containing list of files to index, one per line.\n"
 	"With no LIST, standard input will be read instead\n"
 	"Example: find -type f -and -size -128k | gripgen\n",
+	name);
+}
+
+void version(const char *name)
+{
+	printf("%s (grip indexer) " VERSION_STR "\n"
+	"Copyright (C) 2016 Free Software Foundation, Inc.\n"
+	"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
+	"This is free software: you are free to change and redistribute it.\n"
+	"There is NO WARRANTY, to the extent permitted by law.\n"
+	"\n"
+	"Written by Mike Szymaniak, http://sc0ty.pl\n",
 	name);
 }
 

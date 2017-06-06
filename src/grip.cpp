@@ -4,6 +4,7 @@
 #include "glob.h"
 #include "fileline.h"
 #include "dir.h"
+#include "config.h"
 #include "print.h"
 #include "error.h"
 #include <cstring>
@@ -60,6 +61,7 @@ static struct option const LONGOPTS[] =
 	{"no-messages", no_argument, NULL, 's'},
 	{"word-regexp", no_argument, NULL, 'w'},
 	{"line-regexp", no_argument, NULL, 'x'},
+	{"version", no_argument, NULL, 'V'},
 
 #define GLOB_TYPE_FILTER(id, name, ...) \
 	{#name, no_argument, NULL, GLOB_TYPE_OPTIONS + id*2}, \
@@ -74,11 +76,12 @@ static char const SHORTOPTS[] =
 #ifndef USE_MATCHER
 	"EFG"
 #endif
-	"A:B:C:f:hilswx0123456789";
+	"A:B:C:f:hilswxV0123456789";
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
 static void usage(const char *name);
+static void version(const char *name);
 
 
 int main(int argc, char * const argv[])
@@ -184,6 +187,11 @@ int main(int argc, char * const argv[])
 
 				case 'x':
 					grep.matchMode(Grep::MATCH_WHOLE_LINE);
+					break;
+
+				case 'V':
+					version(argv[0]);
+					return 0;
 					break;
 
 				case EXCLUDE_OPTION:
@@ -334,7 +342,6 @@ void usage(const char *name)
 	printf("Usage: %s [OPTIONS] PATTERN [PATTERN...]\n"
 	"Indexed grep - search for PATTERN in previously indexed files "
 	"(with gripgen).\n"
-	"Author: Mike Szymaniak, http://sc0ty.pl\n"
 	"\n"
 	"Regexp selection and interpretation:\n"
 #ifndef USE_MATCHER
@@ -369,6 +376,18 @@ void usage(const char *name)
 	"      --color[=WHEN],\n"
 	"      --colour[=WHEN]       use markers to highlight the matching strings;\n"
 	"                            WHEN is 'always', 'never', or 'auto' (default)\n",
+	name);
+}
+
+void version(const char *name)
+{
+	printf("%s (index based grep) " VERSION_STR "\n"
+	"Copyright (C) 2016 Free Software Foundation, Inc.\n"
+	"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
+	"This is free software: you are free to change and redistribute it.\n"
+	"There is NO WARRANTY, to the extent permitted by law.\n"
+	"\n"
+	"Written by Mike Szymaniak, http://sc0ty.pl\n",
 	name);
 }
 

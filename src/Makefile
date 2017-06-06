@@ -49,6 +49,12 @@ CXXFLAGS += $(BOOST_CXXFLAGS)
 LDFLAGS  += $(BOOST_LDFLAGS)
 endif
 
+VERSION  ?= $(shell git describe --tags 2>/dev/null)
+ifneq ($(VERSION), )
+	CXXFLAGS += -DVERSION=\"$(VERSION)\"
+endif
+
+
 TARGETS = \
 		  grip \
 		  egrip \

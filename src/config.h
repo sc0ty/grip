@@ -17,4 +17,14 @@
 #define TRIGRAMS_DATA_PATH_TMP  TRIGRAMS_DATA_PATH TMP_SUFFIX
 #define FILE_LIST_PATH_TMP      FILE_LIST_PATH TMP_SUFFIX
 
+#ifndef VERSION
+#define VERSION "CUSTOM-BUILD"
+#endif
+
+#ifdef NDEBUG
+#define VERSION_STR VERSION
+#else
+#define VERSION_STR VERSION "-debug"
+#endif
+
 #endif
