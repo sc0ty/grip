@@ -90,9 +90,6 @@ int main(int argc, char * const argv[])
 	{
 		color::init();
 
-		string dbdir = getIndexPath();
-		string cwd = getCurrentDirectory();
-
 		vector<string> patterns;
 		bool caseSensitivePatterns = true;
 
@@ -101,9 +98,6 @@ int main(int argc, char * const argv[])
 #else
 		Pattern::Mode mode = Pattern::BASIC;
 #endif
-
-		DbReader database(dbdir);
-		Ids ids;
 
 		Grep grep;
 		unsigned context = 0;
@@ -253,7 +247,13 @@ int main(int argc, char * const argv[])
 			return 2;
 		}
 
+		string dbdir = getIndexPath();
+		string cwd = getCurrentDirectory();
+
+		DbReader database(dbdir);
+		Ids ids;
 		Node tree;
+
 		for (const string &pattern : patterns)
 		{
 			Pattern *p = Pattern::create(pattern, mode, caseSensitivePatterns);
