@@ -66,18 +66,18 @@ static atomic_int result;
 
 int main(int argc, char * const argv[])
 {
+	Indexer indexer;
+	size_t chunkSize = 64 * 1024 * 1024;
+
+	FileLineReader files;
+
+	int verbose = 1;
+	bool updateIndex = false;
+
+	result = 0;
+
 	try
 	{
-		Indexer indexer;
-		size_t chunkSize = 64 * 1024 * 1024;
-
-		FileLineReader files;
-
-		int verbose = 1;
-		bool updateIndex = false;
-
-		result = 0;
-
 		int opt;
 		while ((opt = getopt_long(argc, argv, SHORTOPTS, LONGOPTS, NULL)) != -1)
 		{
@@ -148,6 +148,15 @@ int main(int argc, char * const argv[])
 			print("indexing...");
 
 		indexer.open();
+	}
+	catch (const Error &ex)
+	{
+		printGenericError(ex);
+		return 2;
+	}
+
+	try
+	{
 		thread(fileListProducer, ref(files)).detach();
 		startTime = lastTime = steady_clock::now();
 
