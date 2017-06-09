@@ -17,17 +17,17 @@ class Queue
 			m_sem.post();
 		}
 
-		void put(const T &name)
+		void put(const T &element)
 		{
 			{
 				std::unique_lock<std::mutex> lock(m_mutex);
-				m_elements.push(name);
+				m_elements.push(element);
 				m_added++;
 			}
 			m_sem.post();
 		}
 
-		bool get(T &name)
+		bool get(T &element)
 		{
 			std::unique_lock<std::mutex> lock(m_mutex);
 			while (m_elements.empty())
@@ -40,7 +40,7 @@ class Queue
 				lock.lock();
 			}
 
-			name = m_elements.front();
+			element = m_elements.front();
 			m_elements.pop();
 			return true;
 		}
