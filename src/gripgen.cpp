@@ -58,6 +58,7 @@ static void version(const char *name);
 
 static steady_clock::time_point startTime, lastTime;
 static Queue<string> filesQueue;
+static atomic_bool fileListProducerRunning;
 static mutex printMutex;
 
 static bool supressErrors = false;
@@ -70,6 +71,7 @@ int main(int argc, char * const argv[])
 	size_t chunkSize = 64 * 1024 * 1024;
 
 	FileLineReader files;
+	bool fileListProducerThreadStarted = false;
 
 	int verbose = 1;
 	bool updateIndex = false;
@@ -148,16 +150,11 @@ int main(int argc, char * const argv[])
 			print("indexing...");
 
 		indexer.open();
-	}
-	catch (const Error &ex)
-	{
-		printGenericError(ex);
-		return 2;
-	}
 
-	try
-	{
+		fileListProducerRunning = true;
 		thread(fileListProducer, ref(files)).detach();
+		fileListProducerThreadStarted = true;
+
 		startTime = lastTime = steady_clock::now();
 
 		unsigned long chunksNo = 0;
@@ -238,8 +235,18 @@ int main(int argc, char * const argv[])
 		printGenericError(ex);
 		result = 1;
 	}
+	catch (const exception &ex)
+	{
+		printGenericError(FuncError(ex.what()));
+		result = 1;
+	}
 
-	filesQueue.wait();
+	if (fileListProducerThreadStarted)
+	{
+		fileListProducerRunning = false;
+		filesQueue.wait();
+	}
+
 	return result;
 }
 
@@ -250,7 +257,7 @@ void fileListProducer(FileLineReader &files)
 
 	try
 	{
-		while ((fname = files.readLine(false)) != NULL)
+		while (fileListProducerRunning && (fname = files.readLine(false)) != NULL)
 		{
 			try
 			{
