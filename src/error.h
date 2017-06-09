@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <typeinfo>
 
 
 class Error : public std::runtime_error
@@ -22,6 +23,18 @@ class Error : public std::runtime_error
 			std::stringstream ss;
 			ss << value;
 			return add(name, ss.str());
+		}
+
+		Error &addSource(const char *file, unsigned line,
+				const char *func, const char *clas = NULL) throw()
+		{
+			std::stringstream ss;
+			ss << file << ':' << line << "  ";
+			if (clas)
+				ss << clas << "::";
+
+			ss << func;
+			return add("source", ss.str());
 		}
 
 		const std::string &get(const std::string &tag) const throw();
@@ -63,28 +76,12 @@ ErrorObj<T> errorObj(T &obj, const char *msg, int err)
 }
 
 
-#ifdef NDEBUG
-
-#define ThisError(...) errorObj(*this, __VA_ARGS__)
-#define FuncError(...) Error(__VA_ARGS__)
-
-#else
-
-#include <typeinfo>
-
 #define ThisError(...) \
 	errorObj(*this, __VA_ARGS__) \
-	.add("class", std::string(typeid(this).name())) \
-	.add("method", __FUNCTION__) \
-	.add("srcfile", __FILE__) \
-	.add("srcline", __LINE__)
+	.addSource(__FILE__, __LINE__, __func__, typeid(this).name())
 
 #define FuncError(...) \
 	Error(__VA_ARGS__) \
-	.add("function", __func__) \
-	.add("srcfile", __FILE__) \
-	.add("srcline", __LINE__)
-
-#endif
+	.addSource(__FILE__, __LINE__, __func__)
 
 #endif
