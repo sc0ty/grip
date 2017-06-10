@@ -152,6 +152,9 @@ uint32_t *Ids::setData(size_t size)
 	return m_ids.data();
 }
 
+void Ids::validate() const
+{}
+
 Ids::iterator Ids::begin()
 {
 	return m_ids.begin();

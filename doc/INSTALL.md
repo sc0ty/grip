@@ -39,7 +39,7 @@ You may need to add `-pthread` to `BOOST_LDFLAGS` if you are linking against mul
 ### Configuration
 Makefile accepts several configuration variables:
 * `STATIC=yes` - static linking with libraries;
-* `USE_BOOST=yes/mt/manual` - use boost library instead of POSIX functions, `mt` should be used against multi-threaded boost build, `manual` allows to configure compiler and linker flags manualli with `BOOST_CXXFLAGS` and `BOOST_LDFLAGS`;
+* `USE_BOOST=yes/manual` - use boost library instead of POSIX functions, `manual` allows to configure compiler and linker flags manualli with `BOOST_CXXFLAGS` and `BOOST_LDFLAGS`;
 * `CXX` - override compiler program;
 * `CXXFLAGS` and `LDFLAGS` - override compiler and linker flags.
 

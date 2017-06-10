@@ -3,8 +3,9 @@
 *.bak
 *.vim
 .grip
-grip
-egrip
-fgrip
-gripgen
+/src/grip/grip
+/src/grip/egrip
+/src/grip/fgrip
+/src/gripgen/gripgen
+/src/test/test
 tags

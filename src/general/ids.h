@@ -40,6 +40,7 @@ class Ids
 		const_iterator begin() const;
 		const_iterator end() const;
 
+		void validate() const;
 	private:
 		std::vector<uint32_t> m_ids;
 };
