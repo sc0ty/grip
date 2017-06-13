@@ -111,26 +111,25 @@ Pattern::Match Grep::matchStr(const char *str, bool wholeLine) const
 	for (Pattern *pattern : m_patterns)
 	{
 		Pattern::Match match = pattern->match(str, wholeLine);
-		if (match.pos && (firstMatch.pos == NULL || match.pos < firstMatch.pos))
+		if (match.pos)
 		{
 			if (m_matchMode == MATCH_WHOLE_LINE)
 			{
-				if (!wholeLine)
-					break;
-
-				if ((str != match.pos) || (strlen(str) != match.len))
+				if (!wholeLine || (str != match.pos) || (strlen(str) != match.len))
 					break;
 			}
 			else if (m_matchMode == MATCH_WHOLE_WORD)
 			{
-				if ((match.pos > str) && IS_WORD_CHAR(match.pos[-1]))
-					continue;
-
-				if (IS_WORD_CHAR(match.pos[match.len]))
-					continue;
+				while ((match.pos > str && IS_WORD_CHAR(match.pos[-1])) || IS_WORD_CHAR(match.pos[match.len]))
+				{
+					match = pattern->match(match.pos + 1, wholeLine);
+					if (match.pos == NULL)
+						break;
+				}
 			}
 
-			firstMatch = match;
+			if (match.pos && (firstMatch.pos == NULL || match.pos < firstMatch.pos))
+				firstMatch = match;
 		}
 	}
 
