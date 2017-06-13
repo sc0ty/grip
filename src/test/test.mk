@@ -11,6 +11,10 @@ TEST_HEADERS = \
 			   $(TEST_DIR)/ids.h \
 			   $(GENERAL_HEADERS) \
 
+TEST_CXXFLAGS = $(CXXFLAGS) \
+				-O0 \
+				-g \
+
 
 TEST_OBJDIR   = $(OBJDIR)/$(TEST_DIR)
 TEST_OBJDIRS  = $(sort $(dir $(TEST_OBJECTS)))
@@ -24,7 +28,7 @@ $(TEST_TARGET): $(TEST_OBJECTS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(TEST_OBJECTS): $(TEST_OBJDIR)/%.o: %.cpp $(TEST_HEADERS) | $(TEST_OBJDIRS)
-	$(CXX) -c -o $@ $< $(CXXFLAGS)
+	$(CXX) -c -o $@ $< $(TEST_CXXFLAGS)
 
 $(TEST_OBJDIRS):
 	$(MKDIR) $@
