@@ -12,11 +12,6 @@
 #define COL_LINE	color::Green
 #define COL_SEP		color::Cyan
 
-#define IS_WORD_CHAR(x)	( \
-	((x)>='a' && (x)<='z') || \
-	((x)>='A' && (x)<='Z') || \
-	((x)>='0' && (x)<='9') || \
-	((x)=='_') )
 
 using namespace std;
 
@@ -68,7 +63,7 @@ bool Grep::grepFile(const string &fname)
 
 	while ((line = file.readLine(false)) != NULL)
 	{
-		Pattern::Match match = matchStr(line, true);
+		Pattern::Match match = matchStr(line);
 
 		if (match.pos)
 		{
@@ -104,33 +99,23 @@ bool Grep::grepFile(const string &fname)
 	return lastMatch;
 }
 
-Pattern::Match Grep::matchStr(const char *str, bool wholeLine) const
+Pattern::Match Grep::matchStr(const char *str) const
 {
 	Pattern::Match firstMatch;
 
 	for (Pattern *pattern : m_patterns)
 	{
-		Pattern::Match match = pattern->match(str, wholeLine);
-		if (match.pos)
-		{
-			if (m_matchMode == MATCH_WHOLE_LINE)
-			{
-				if (!wholeLine || (str != match.pos) || (strlen(str) != match.len))
-					break;
-			}
-			else if (m_matchMode == MATCH_WHOLE_WORD)
-			{
-				while ((match.pos > str && IS_WORD_CHAR(match.pos[-1])) || IS_WORD_CHAR(match.pos[match.len]))
-				{
-					match = pattern->match(match.pos + 1, wholeLine);
-					if (match.pos == NULL)
-						break;
-				}
-			}
+		Pattern::Match match;
 
-			if (match.pos && (firstMatch.pos == NULL || match.pos < firstMatch.pos))
-				firstMatch = match;
-		}
+		if (m_matchMode == MATCH_DEFAULT)
+			match = pattern->match(str);
+		else if (m_matchMode == MATCH_WHOLE_WORD)
+			match = pattern->matchWord(str);
+		else if (m_matchMode == MATCH_WHOLE_LINE)
+			match = pattern->matchAll(str);
+
+		if (match.pos && (firstMatch.pos == NULL || match.pos < firstMatch.pos))
+			firstMatch = match;
 	}
 
 	return firstMatch;
@@ -154,9 +139,12 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 	{
 		printf("%.*s", (int)(match.pos-line), line);
 		printMatch(match);
-
 		line = match.pos + match.len;
-		match = matchStr(line, false);
+
+		if (m_matchMode == MATCH_WHOLE_LINE)
+			break;
+
+		match = matchStr(line);
 	}
 
 	printf("%s\n", line);

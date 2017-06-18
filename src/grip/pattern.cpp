@@ -10,6 +10,14 @@
 #include <regex.h>
 #endif
 
+
+#define IS_WORD_CHAR(x)	( \
+	((x)>='a' && (x)<='z') || \
+	((x)>='A' && (x)<='Z') || \
+	((x)>='0' && (x)<='9') || \
+	((x)=='_') )
+
+
 using namespace std;
 
 
@@ -28,9 +36,8 @@ class LiteralPattern : public Pattern
 			tree.parseFixedString(m_pattern, true);
 		}
 
-		virtual Match match(const char *str, bool wholeLine) const
+		virtual Match match(const char *str) const
 		{
-			(void)wholeLine;
 			Match res(strstr(str, m_pattern.c_str()));
 
 			if (res.pos)
@@ -62,9 +69,8 @@ class LiteralCaseInsPattern : public Pattern
 			tree.parseFixedString(m_pattern, false);
 		}
 
-		virtual Match match(const char *str, bool wholeLine) const
+		virtual Match match(const char *str) const
 		{
-			(void)wholeLine;
 			const char *p = m_pattern.c_str();
 
 			for (const char *ch = str; *ch != '\0'; ch++)
@@ -119,11 +125,10 @@ class RegexPattern : public Pattern
 			tree.parseRegex(m_pattern, m_extended, m_caseSensitive);
 		}
 
-		virtual Match match(const char *str, bool wholeLine) const
+		virtual Match match(const char *str) const
 		{
 			regmatch_t res;
-			int flags = wholeLine ? 0 : REG_NOTBOL;
-			int code = regexec(&m_regex, str, 1, &res, flags);
+			int code = regexec(&m_regex, str, 1, &res, 0);
 
 			if (code == 0)
 			{
@@ -157,8 +162,6 @@ class RegexPattern : public Pattern
 };
 
 
-/*** Pattern ***/
-
 Pattern::~Pattern()
 {}
 
@@ -176,6 +179,32 @@ Pattern *Pattern::create(const string &pattern, Mode mode, bool caseSensitive)
 		bool extended = (mode == EXTENDED);
 		return new RegexPattern(pattern, extended, caseSensitive);
 	}
+}
+
+Pattern::Match Pattern::matchWord(const char *str) const
+{
+	Match res;
+	for (size_t i = 0; str[i] != '\0'; i++)
+	{
+		res = match(str + i);
+
+		if (res.pos == NULL)
+			break;
+
+		if ((res.pos == str || !IS_WORD_CHAR(res.pos[-1]))
+				&& !IS_WORD_CHAR(res.pos[res.len]))
+			break;
+	}
+	return res;
+}
+
+Pattern::Match Pattern::matchAll(const char *str) const
+{
+	Match res = match(str);
+	if (res.pos != str || res.pos[res.len] != '\0')
+		res.pos = NULL;
+
+	return res;
 }
 
 Pattern::Match::Match(const char *pos, size_t len) : pos(pos), len(len)

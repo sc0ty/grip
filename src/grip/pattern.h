@@ -26,7 +26,10 @@ class Pattern
 	public:
 		virtual ~Pattern();
 		virtual void tokenize(Node &tree) const = 0;
-		virtual Match match(const char *str, bool wholeLine) const = 0;
+		virtual Match match(const char *str) const = 0;
+
+		Match matchWord(const char *str) const;
+		Match matchAll(const char *str) const;
 
 		static Pattern *create(const std::string &pattern, Mode mode,
 				bool caseSensitive = true);

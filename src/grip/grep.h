@@ -24,7 +24,7 @@ class Grep
 		bool grepFile(const std::string &fname);
 
 	private:
-		Pattern::Match matchStr(const char *str, bool wholeLine) const;
+		Pattern::Match matchStr(const char *str) const;
 
 		void printMatch(const char *fname, unsigned lineNo, const char *line,
 				const Pattern::Match &firstMatch = Pattern::Match());
