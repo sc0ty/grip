@@ -5,11 +5,14 @@ TEST_SOURCES = \
 			   $(TEST_DIR)/test.cpp \
 			   $(TEST_DIR)/ids.cpp \
 			   $(TEST_DIR)/compressedids.cpp \
+			   $(TEST_DIR)/pattern.cpp \
 			   $(GENERAL_SOURCES) \
+			   grip/pattern.cpp \
 
 TEST_HEADERS = \
 			   $(TEST_DIR)/ids.h \
 			   $(GENERAL_HEADERS) \
+			   grip/pattern.h \
 
 TEST_CXXFLAGS = $(CXXFLAGS) \
 				-O0 \
