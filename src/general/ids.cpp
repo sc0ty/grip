@@ -1,6 +1,7 @@
 #include "ids.h"
 #include "error.h"
 #include <cstring>
+#include <algorithm>
 
 using namespace std;
 
@@ -53,19 +54,10 @@ void Ids::swap(Ids &x)
 
 void Ids::merge(const Ids &ids1, const Ids &ids2)
 {
-	clear();
-
-	const_iterator i1 = ids1.begin();
-	const_iterator i2 = ids2.begin();
-
-	while ((i1 != ids1.end()) && (i2 != ids2.end()))
-		add(*i1 < *i2 ? *i1++ : *i2++);
-
-	while (i1 != ids1.end())
-		add(*i1++);
-
-	while (i2 != ids2.end())
-		add(*i2++);
+	m_ids.resize(ids1.size() + ids2.size());
+	auto begin = m_ids.begin();
+	auto end = set_union(ids1.begin(), ids1.end(), ids2.begin(), ids2.end(), begin);
+	m_ids.resize(end - begin);
 }
 
 void Ids::merge(const Ids &ids)
@@ -82,36 +74,15 @@ void Ids::concat(const Ids &ids)
 
 bool Ids::hasId(uint32_t id) const
 {
-	size_t x = 0;
-	size_t y = m_ids.size();
-
-	if (y-- == 0)
-		return false;
-
-	while (x + 1 < y)
-	{
-		size_t pos = x + (y - x) / 2;
-		uint32_t test = m_ids[pos];
-
-		if (id < test)
-			y = pos;
-		else if (id > test)
-			x = pos;
-		else
-			return true;
-	}
-
-	return (id == m_ids[x]) || (id == m_ids[y]);
+	return binary_search(m_ids.begin(), m_ids.end(), id);
 }
 
 void Ids::commonPart(const Ids &ids1, const Ids &ids2)
 {
-	clear();
-	for (auto id : ids1.m_ids)
-	{
-		if (ids2.hasId(id))
-			add(id);
-	}
+	m_ids.resize(max(ids1.size(), ids2.size()));
+	auto begin = m_ids.begin();
+	auto end = set_intersection(ids1.begin(), ids1.end(), ids2.begin(), ids2.end(), begin);
+	m_ids.resize(end - begin);
 }
 
 void Ids::commonPart(const Ids &ids)
@@ -153,7 +124,10 @@ uint32_t *Ids::setData(size_t size)
 }
 
 void Ids::validate() const
-{}
+{
+	if (!is_sorted(m_ids.begin(), m_ids.end()))
+		throw ThisError("internal error, ids not sorted");
+}
 
 Ids::iterator Ids::begin()
 {
