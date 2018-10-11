@@ -31,6 +31,7 @@ enum
 	EXCLUDE_FROM_OPTION,
 	INCLUDE_OPTION,
 	EXTENDED_GLOB_OPTION,
+	DOT_GRAPH_OPTION,
 	GLOB_TYPE_OPTIONS,			// must be last one
 };
 
@@ -48,6 +49,7 @@ static struct option const LONGOPTS[] =
 	{"context", required_argument, NULL, 'C'},
 	{"color", optional_argument, NULL, COLOR_OPTION},
 	{"colour", optional_argument, NULL, COLOR_OPTION},
+	{"dot", required_argument, NULL, DOT_GRAPH_OPTION},
 	{"help", no_argument, NULL, 'h'},
 	{"ignore-case", optional_argument, NULL, 'i'},
 	{"exclude", required_argument, NULL, EXCLUDE_OPTION},
@@ -80,6 +82,7 @@ static char const SHORTOPTS[] =
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
+static void saveDotGraph(const Node *tree, const char *fname);
 static void usage(const char *name);
 static void version(const char *name);
 
@@ -106,6 +109,8 @@ int main(int argc, char * const argv[])
 
 		bool listOnly = false;
 		int verbose = 1;
+
+		const char *dotGraphPath = NULL;
 
 		int opt;
 		while ((opt = getopt_long(argc, argv, SHORTOPTS, LONGOPTS, NULL)) != -1)
@@ -137,6 +142,10 @@ int main(int argc, char * const argv[])
 						color::mode(true);
 					else if (strcmp(optarg, "never") == 0)
 						color::mode(false);
+					break;
+
+				case DOT_GRAPH_OPTION:
+					dotGraphPath = optarg;
 					break;
 
 				case 'f':
@@ -261,6 +270,9 @@ int main(int argc, char * const argv[])
 			p->tokenize(tree);
 		}
 
+		if (dotGraphPath)
+			saveDotGraph(&tree, dotGraphPath);
+
 		tree.findIds(ids, database);
 		bool found = false;
 
@@ -337,6 +349,16 @@ void readExcludeFromFile(Glob &glob, const char *fname)
 	}
 }
 
+void saveDotGraph(const Node *tree, const char *fname)
+{
+	list<string> graph;
+	tree->makeDotGraph(graph);
+
+	File fp(fname, "w");
+	for (const string &line : graph)
+		fp.writeLine(line);
+}
+
 void usage(const char *name)
 {
 	printf("Usage: %s [OPTIONS] PATTERN [PATTERN...]\n"
@@ -375,7 +397,10 @@ void usage(const char *name)
 	"  -NUM                      same as --context=NUM\n"
 	"      --color[=WHEN],\n"
 	"      --colour[=WHEN]       use markers to highlight the matching strings;\n"
-	"                            WHEN is 'always', 'never', or 'auto' (default)\n",
+	"                            WHEN is 'always', 'never', or 'auto' (default)\n"
+	"\n"
+	"Debug options:\n"
+	"  --dot=FILE                save query as Graphviz DOT graph\n",
 	name);
 }
 

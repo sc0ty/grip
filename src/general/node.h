@@ -36,6 +36,10 @@ class Node
 		const std::list<NodePtr> &getNext() const;
 		int getVal() const;
 
+		/* debug methods */
+		std::string toString(bool unique=false) const;
+		void makeDotGraph(std::list<std::string> &graph) const;
+
 	private:
 		void tokenizeFixedString(const char *str);
 		Node *tokenizeRegex(const char **exp, bool extended);

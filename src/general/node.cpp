@@ -333,6 +333,56 @@ bool Node::isUnambiguous(unsigned charsNo) const
 	return false;
 }
 
+string Node::toString(bool unique) const
+{
+	int v = val & ~NODE_MARK;
+	string res;
+	switch (v)
+	{
+		case NODE_EMPTY: res = "<EMPTY>"; break;
+		case NODE_SPLIT: res = "<SPLIT>"; break;
+		case NODE_END: res = "<END>"; break;
+		case '\t': res = "'\\t'"; break;
+		case '\n': res = "'\\n'"; break;
+		case '\r': res = "'\\r'"; break;
+		default:
+			const static size_t size = 20;
+			char buf[size];
+			if (v >= 0x20 && v <= 0x7e)
+				snprintf(buf, size, "'%c'", (char) v);
+			else
+				snprintf(buf, size, "%#x", v);
+			res = buf;
+	}
+
+	if (unique)
+	{
+		const static size_t size = 40;
+		char buf[size];
+		snprintf(buf, size, "%p: %s", (void*) this, res.c_str());
+		res = buf;
+	}
+
+	return res;
+}
+
+void Node::makeDotGraph(list<string> &graph) const
+{
+	bool header = graph.empty();
+	if (header)
+		graph.push_back("digraph Tree {");
+
+	for (const auto &n : next)
+		graph.push_back(string("\t\"") + toString(true) + "\" -> \""
+				+ n->toString(true) + "\"");
+
+	for (const auto &n : next)
+		n->makeDotGraph(graph);
+
+	if (header)
+		graph.push_back("}");
+}
+
 const char *skipBracket(const char *ch)
 {
 	int lvl = 1;
