@@ -87,6 +87,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 				break;
 
 			case '.':
+				prev = node;
 				node = node->addNext(NODE_SPLIT);
 				break;
 
@@ -148,6 +149,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 
 						case '|':
 							prev = NULL;
+							addCommonDescendant(make_shared<Node>(NODE_END));
 							node = addNext();
 							branched = true;
 							break;
