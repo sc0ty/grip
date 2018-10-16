@@ -141,6 +141,10 @@ void Grep::printMatch(const char *fname, unsigned lineNo, const char *line,
 		printMatch(match);
 		line = match.pos + match.len;
 
+		// workaround for infinite loop in zero-length match
+		if (match.len == 0)
+			break;
+
 		if (m_matchMode == MATCH_WHOLE_LINE)
 			break;
 
