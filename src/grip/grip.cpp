@@ -314,6 +314,9 @@ int main(int argc, char * const argv[])
 		for (auto tag : ex.tags)
 			fprintf(stderr, "\t%s: %s\n", tag.first.c_str(), tag.second.c_str());
 
+		if (ex.get("type") == "invalid_query")
+			return 3;
+
 		return 2;
 	}
 }

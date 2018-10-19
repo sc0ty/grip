@@ -110,6 +110,7 @@ class RegexPattern : public Pattern
 			if (res != 0)
 			{
 				throw ThisError("malformed regular expression")
+					.add("type", "invalid_query")
 					.add("regex", pattern)
 					.add("msg", getError(res));
 			}
@@ -141,6 +142,7 @@ class RegexPattern : public Pattern
 			else
 			{
 				throw ThisError("malformed regular expression")
+					.add("type", "invalid_query")
 					.add("regex", m_pattern)
 					.add("msg", getError(code));
 			}
@@ -167,6 +169,11 @@ Pattern::~Pattern()
 
 Pattern *Pattern::create(const string &pattern, Mode mode, bool caseSensitive)
 {
+	if (pattern.find('\0') != string::npos)
+		throw FuncError("malformed regular expression")
+			.add("type", "invalid_query")
+			.add("regex", pattern);
+
 	if (mode == FIXED)
 	{
 		if (caseSensitive)

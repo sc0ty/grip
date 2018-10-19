@@ -5,6 +5,12 @@ GRIP_TARGETS = \
 			   $(GRIP_DIR)/egrip$(SUFFIX) \
 			   $(GRIP_DIR)/fgrip$(SUFFIX) \
 
+ifdef VERIFY
+GRIP_TARGETS += $(GRIP_DIR)/grip-verify$(SUFFIX)
+CXXFLAGS     += -pthread
+LDFLAGS      += -pthread
+endif
+
 TARGETS     += $(GRIP_TARGETS)
 
 GRIP_SOURCES = \
@@ -26,6 +32,11 @@ GRIP_OBJDIR   = $(OBJDIR)/$(GRIP_DIR)
 GRIP_OBJDIRS  = $(sort $(dir $(GRIP_OBJECTS) $(GRIP_TOBJECTS)))
 GRIP_OBJECTS  = $(addprefix $(GRIP_OBJDIR)/, $(GRIP_SOURCES:.cpp=.o))
 GRIP_TOBJECTS = $(addprefix $(GRIP_OBJDIR)/, $(GRIP_TARGETS:$(SUFFIX)=.o))
+
+
+$(GRIP_OBJDIR)/grip/fgrip.o: $(GRIP_DIR)/grip.cpp
+$(GRIP_OBJDIR)/grip/egrip.o: $(GRIP_DIR)/grip.cpp
+$(GRIP_OBJDIR)/grip/grip-verify.o: $(GRIP_DIR)/grip.cpp
 
 
 $(GRIP_TARGETS): %$(SUFFIX): $(GRIP_OBJDIR)/%.o $(GRIP_OBJECTS)

@@ -24,7 +24,9 @@ int Node::getVal() const
 void Node::parseFixedString(const string &exp, bool caseSensitive)
 {
 	if (exp.size() < 3)
-		throw ThisError("pattern too short").add("pattern", exp);
+		throw ThisError("pattern too short")
+			.add("type", "invalid_query")
+			.add("pattern", exp);
 
 	Node *node = addNext();
 	node->tokenizeFixedString(exp.c_str());
@@ -55,6 +57,7 @@ void Node::parseRegex(const string &exp, bool extended, bool caseSensitive)
 	if (!node->isUnambiguous())
 	{
 		throw ThisError("ambiguous regular expression - can't use with index")
+			.add("type", "invalid_query")
 			.add("regex", exp);
 	}
 
@@ -114,6 +117,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 				if (*++ch == '\0')
 				{
 					throw ThisError("invalid regular expression")
+						.add("type", "invalid_query")
 						.add("expression", *exp);
 				}
 
@@ -161,6 +165,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 							if (*ch != ')')
 							{
 								throw ThisError("invalid regular expression")
+									.add("type", "invalid_query")
 									.add("expression", *exp);
 							}
 							break;
@@ -407,6 +412,7 @@ const char *skipBracket(const char *ch)
 				if (*ch == '\0')
 				{
 					throw FuncError("invalid regular expression")
+						.add("type", "invalid_query")
 						.add("expression", *ch);
 				}
 		}
