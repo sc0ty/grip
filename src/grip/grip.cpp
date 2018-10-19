@@ -320,16 +320,10 @@ int main(int argc, char * const argv[])
 
 void readPatternsFromFile(const char *fname, vector<string> &patterns)
 {
-	try
-	{
-		FileLineReader file(fname);
-		while (!file.eof())
-			patterns.push_back(file.readLine());
-	}
-	catch (const EndOfFile&)
-	{
-		// silently ignore
-	}
+	FileLineReader file(fname);
+	string line;
+	while (file.readLine(line))
+		patterns.push_back(line);
 }
 
 void readExcludeFromFile(Glob &glob, const char *fname)
@@ -337,9 +331,9 @@ void readExcludeFromFile(Glob &glob, const char *fname)
 	try
 	{
 		FileLineReader file(fname);
-		const char *line;
+		string line;
 
-		while ((line = file.readLine(false)) != NULL)
+		while (file.readLine(line))
 			glob.addExcludePattern(line);
 	}
 	catch (const Error &ex)

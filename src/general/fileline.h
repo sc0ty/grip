@@ -21,7 +21,8 @@ class FileLineReader : protected File
 		size_t size() const;
 		bool eof() const;
 
-		char *readLine(bool throwOnEof = true);
+		char *readLine(bool throwOnEof = true, size_t *length = NULL);
+		bool readLine(std::string &line);
 
 	private:
 		char *m_line;

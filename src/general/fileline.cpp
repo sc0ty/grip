@@ -61,7 +61,7 @@ bool FileLineReader::eof() const
 	return File::eof();
 }
 
-char *FileLineReader::readLine(bool throwOnEof)
+char *FileLineReader::readLine(bool throwOnEof, size_t *length)
 {
 
 #if defined _POSIX_C_SOURCE && _POSIX_C_SOURCE >= 200809L || defined _XOPEN_SOURCE && _XOPEN_SOURCE >= 700
@@ -111,5 +111,20 @@ char *FileLineReader::readLine(bool throwOnEof)
 		read--;
 
 	m_line[read] = '\0';
+
+	if (length)
+		*length = read;
 	return m_line;
+}
+
+bool FileLineReader::readLine(string &line)
+{
+	size_t len = 0;
+	char *res = readLine(false, &len);
+	if (res)
+	{
+		line = string(res, len);
+		return true;
+	}
+	return false;
 }
