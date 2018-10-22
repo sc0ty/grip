@@ -107,10 +107,8 @@ char *FileLineReader::readLine(bool throwOnEof, size_t *length)
 #endif
 
 	// trim new line character
-	while (read && ((m_line[read-1] == '\n') || (m_line[read-1] == '\r')))
-		read--;
-
-	m_line[read] = '\0';
+	if (read > 0 && m_line[read-1] == '\n')
+		m_line[--read] = '\0';
 
 	if (length)
 		*length = read;
