@@ -198,40 +198,57 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 	return node;
 }
 
+void Node::markAll()
+{
+	val |= NODE_MARK;
+	for (auto n : next)
+	{
+		if (!(n->val & NODE_MARK))
+			n->markAll();
+	}
+}
+
 void Node::markAlpha()
 {
 	if (IS_ALPHA(val))
 		val |= NODE_MARK;
 
 	for (auto n : next)
-		n->markAlpha();
+	{
+		if (!(n->val & NODE_MARK))
+			n->markAlpha();
+	}
 }
 
 void Node::permuteCaseMarked()
 {
-	for (list<NodePtr>::iterator it = next.begin(); it != next.end(); it++)
+	list<NodePtr> *nextNodes = &next;
+
+	if (val & NODE_MARK)
 	{
-		Node *n = it->get();
-		n->permuteCaseMarked();
+		val &= ~NODE_MARK;
 
-		if (n->val & NODE_MARK)
+		int v1 = val;
+		int v2 = SWITCH_CASE(v1);
+
+		if (v1 != v2)
 		{
-			n->val &= ~NODE_MARK;
-			int newVal = NODE_EMPTY;
+			val = NODE_EMPTY;
 
-			if (IS_LOWER(n->val))
-				newVal = TO_UPPER(n->val);
-			else if (IS_UPPER(n->val))
-				newVal = TO_LOWER(n->val);
+			NodePtr n1 = make_shared<Node>(v1);
+			n1->next.swap(next);
+			next.push_back(n1);
 
-			if (newVal != NODE_EMPTY)
-			{
-				NodePtr newNode = make_shared<Node>(newVal);
-				newNode->next = n->next;
-				next.insert(++it, newNode);
-			}
+			NodePtr n2 = make_shared<Node>(v2);
+			n2->next = n1->next;
+			next.push_back(n2);
+
+			nextNodes = &n1->next;
 		}
 	}
+
+	for (NodePtr n : *nextNodes)
+		n->permuteCaseMarked();
 }
 
 Node *Node::addNext(int val)
@@ -333,11 +350,11 @@ bool Node::isUnambiguous(unsigned charsNo) const
 
 	for (auto n : next)
 	{
-		if (n->isUnambiguous(charsNo))
-			return true;
+		if (!n->isUnambiguous(charsNo))
+			return false;
 	}
 
-	return false;
+	return !next.empty();
 }
 
 string Node::toString(bool unique) const
@@ -349,9 +366,9 @@ string Node::toString(bool unique) const
 		case NODE_EMPTY: res = "<EMPTY>"; break;
 		case NODE_SPLIT: res = "<SPLIT>"; break;
 		case NODE_END: res = "<END>"; break;
-		case '\t': res = "'\\t'"; break;
-		case '\n': res = "'\\n'"; break;
-		case '\r': res = "'\\r'"; break;
+		case '\t': res = "'\\\\t'"; break;
+		case '\n': res = "'\\\\n'"; break;
+		case '\r': res = "'\\\\r'"; break;
 		default:
 			const static size_t size = 20;
 			char buf[size];
@@ -373,21 +390,29 @@ string Node::toString(bool unique) const
 	return res;
 }
 
-void Node::makeDotGraph(list<string> &graph) const
+void Node::makeDotGraph(string &graph)
 {
-	bool header = graph.empty();
-	if (header)
-		graph.push_back("digraph Tree {");
+	markAll();
+	graph += "digraph Tree {\n";
+	makeDotGraphMarked(graph);
+	graph += "}\n";
+}
 
-	for (const auto &n : next)
-		graph.push_back(string("\t\"") + toString(true) + "\" -> \""
-				+ n->toString(true) + "\"");
+void Node::makeDotGraphMarked(string &graph)
+{
+	if (val & NODE_MARK)
+	{
+		val &= ~NODE_MARK;
 
-	for (const auto &n : next)
-		n->makeDotGraph(graph);
+		for (const auto &n : next)
+		{
+			graph += string("\t\"") + toString(true) + "\" -> \""
+					+ n->toString(true) + "\"";
+		}
 
-	if (header)
-		graph.push_back("}");
+		for (const auto &n : next)
+			n->makeDotGraphMarked(graph);
+	}
 }
 
 const char *skipBracket(const char *ch)

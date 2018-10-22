@@ -82,7 +82,7 @@ static char const SHORTOPTS[] =
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
-static void saveDotGraph(const Node *tree, const char *fname);
+static void saveDotGraph(Node *tree, const char *fname);
 static void usage(const char *name);
 static void version(const char *name);
 
@@ -346,14 +346,13 @@ void readExcludeFromFile(Glob &glob, const char *fname)
 	}
 }
 
-void saveDotGraph(const Node *tree, const char *fname)
+void saveDotGraph(Node *tree, const char *fname)
 {
-	list<string> graph;
+	string graph;
 	tree->makeDotGraph(graph);
 
 	File fp(fname, "w");
-	for (const string &line : graph)
-		fp.writeLine(line);
+	fp.writeLine(graph);
 }
 
 void usage(const char *name)

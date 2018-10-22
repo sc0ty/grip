@@ -38,12 +38,15 @@ class Node
 
 		/* debug methods */
 		std::string toString(bool unique=false) const;
-		void makeDotGraph(std::list<std::string> &graph) const;
+		void makeDotGraph(std::string &graph);
 
 	private:
 		void tokenizeFixedString(const char *str);
 		Node *tokenizeRegex(const char **exp, bool extended);
 
+		void makeDotGraphMarked(std::string &graph);
+
+		void markAll();
 		void markAlpha();
 		void permuteCaseMarked();
 
