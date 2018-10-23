@@ -121,7 +121,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 						.add("expression", *exp);
 				}
 
-				if ((strchr("<>bBwW", *ch) != NULL) || (*ch >= '1' && *ch <= '9'))
+				if ((strchr("<>bBwWSs", *ch) != NULL) || (*ch >= '1' && *ch <= '9'))
 				{
 					prev = NULL;
 					node = node->addNext(NODE_SPLIT);
