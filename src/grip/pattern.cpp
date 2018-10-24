@@ -94,45 +94,6 @@ class LiteralCaseInsPattern : public Pattern
 };
 
 
-static bool validateRegexPattern(const string &pattern, bool extended)
-{
-	int rounds = 0; // () brackets level
-	int square = 0; // [] brackets level
-	int curly  = 0; // {} brackets level
-	bool escaped = false;
-
-	for (char c : pattern)
-	{
-		if (c == '\\')
-		{
-			escaped = !escaped;
-		}
-		else
-		{
-			if (escaped ^ extended)
-			{
-				switch (c)
-				{
-					case '(': rounds++; break;
-					case ')': if (rounds-- <= 0) return false; break;
-					case '{': curly++; break;
-					case '}': if (curly-- <= 0) return false; break;
-				}
-			}
-			else
-			{
-				switch (c)
-				{
-					case '[': square++; break;
-					case ']': if (square-- <= 0) return false; break;
-				}
-			}
-		}
-	}
-	return rounds == 0 && square == 0 && curly == 0 && escaped == false;
-}
-
-
 class RegexPattern : public Pattern
 {
 	public:
@@ -141,11 +102,6 @@ class RegexPattern : public Pattern
 			m_extended(extended),
 			m_caseSensitive(cs)
 		{
-			if (!validateRegexPattern(pattern, extended))
-				throw ThisError("malformed regular expression")
-					.add("type", "invalid_query")
-					.add("regex", pattern);
-
 			int flags = 0;
 			flags |= extended ? REG_EXTENDED : 0;
 			flags |= !cs ? REG_ICASE : 0;
@@ -155,7 +111,7 @@ class RegexPattern : public Pattern
 			{
 				throw ThisError("malformed regular expression")
 					.add("type", "invalid_query")
-					.add("regex", pattern)
+					.add("expression", pattern)
 					.add("msg", getError(res));
 			}
 		}
@@ -187,7 +143,7 @@ class RegexPattern : public Pattern
 			{
 				throw ThisError("malformed regular expression")
 					.add("type", "invalid_query")
-					.add("regex", m_pattern)
+					.add("expression", m_pattern)
 					.add("msg", getError(code));
 			}
 		}
@@ -216,7 +172,7 @@ Pattern *Pattern::create(const string &pattern, Mode mode, bool caseSensitive)
 	if (pattern.find('\0') != string::npos || pattern.find('\n') != string::npos)
 		throw FuncError("malformed regular expression")
 			.add("type", "invalid_query")
-			.add("regex", pattern);
+			.add("expression", pattern);
 
 	if (mode == FIXED)
 	{

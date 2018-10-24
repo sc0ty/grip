@@ -5,7 +5,8 @@
 using namespace std;
 
 
-static const char *skipBracket(const char *ch);
+static const char *skipBrackets(const char *ch);
+static const char *skipBraces(const char *ch);
 
 
 Node::Node(int val) : val(val)
@@ -52,7 +53,7 @@ void Node::parseRegex(const string &exp, bool extended, bool caseSensitive)
 	Node *node = addNext();
 
 	const char *e = exp.c_str();
-	node->tokenizeRegex(&e, extended);
+	node->tokenizeRegex(&e, extended, false);
 
 	if (!node->isUnambiguous())
 	{
@@ -68,7 +69,7 @@ void Node::parseRegex(const string &exp, bool extended, bool caseSensitive)
 	}
 }
 
-Node *Node::tokenizeRegex(const char **exp, bool extended)
+Node *Node::tokenizeRegex(const char **exp, bool extended, bool nested)
 {
 	Node *node = addNext();
 	Node *prev = NULL;
@@ -84,7 +85,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 		switch (*ch)
 		{
 			case '[':
-				ch = skipBracket(ch);
+				ch = skipBrackets(ch);
 				prev = NULL;
 				node = node->addNext(NODE_SPLIT);
 				break;
@@ -118,6 +119,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 				{
 					throw ThisError("invalid regular expression")
 						.add("type", "invalid_query")
+						.add("msg", "stray \\")
 						.add("expression", *exp);
 				}
 
@@ -129,6 +131,7 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 				}
 
 				escaped = true;
+				// fallthrough
 
 			default:
 				if (extended ^ escaped)
@@ -136,7 +139,8 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 					switch (*ch)
 					{
 						case '{':
-							for (ch++; *ch != '}' && *ch != '\0'; ch++);
+							ch = skipBraces(ch);
+							// fallthrough
 
 						case '?':
 							if (prev)
@@ -161,16 +165,25 @@ Node *Node::tokenizeRegex(const char **exp, bool extended)
 						case '(':
 							ch++;
 							prev = node;
-							node = node->tokenizeRegex(&ch, extended);
+							node = node->tokenizeRegex(&ch, extended, true);
 							if (*ch != ')')
 							{
 								throw ThisError("invalid regular expression")
 									.add("type", "invalid_query")
+									.add("msg", "unmatched (")
 									.add("expression", *exp);
 							}
 							break;
 
 						case ')':
+							if (!nested)
+							{
+								throw ThisError("invalid regular expression")
+									.add("type", "invalid_query")
+									.add("msg", "unmatched )")
+									.add("expression", *exp);
+							}
+
 							if (branched)
 								node = addCommonDescendant(make_shared<Node>());
 
@@ -407,7 +420,7 @@ void Node::makeDotGraphMarked(string &graph)
 		for (const auto &n : next)
 		{
 			graph += string("\t\"") + toString(true) + "\" -> \""
-					+ n->toString(true) + "\"";
+					+ n->toString(true) + "\"\n";
 		}
 
 		for (const auto &n : next)
@@ -415,34 +428,49 @@ void Node::makeDotGraphMarked(string &graph)
 	}
 }
 
-const char *skipBracket(const char *ch)
+// brackets [...]
+const char *skipBrackets(const char *ch)
 {
-	int lvl = 1;
-	do
+	if (*ch != '[')
+		return ch;
+
+	ch++;
+
+	// first ']' after '[' is not closing bracket
+	if (*ch == ']')
+		ch++;
+
+	ch = strchr(ch, ']');
+	if (ch == NULL)
+		throw FuncError("malformed regular expression")
+			.add("type", "invalid_query")
+			.add("msg", "unmatched '['");
+
+	return ch;
+}
+
+// braces {...}
+const char *skipBraces(const char *ch)
+{
+	if (*ch != '{')
+		return ch;
+
+	size_t minlen = 0;
+	size_t maxlen = 0;
+
+	for (ch++; *ch >= '0' && *ch <= '9'; ch++)
+		minlen++;
+
+	if (*ch == ',')
 	{
-		switch(*++ch)
-		{
-			case '[':
-				lvl++;
-				break;
-
-			case ']':
-				lvl--;
-				break;
-
-			case '\\':
-				ch++;
-
-			default:
-				if (*ch == '\0')
-				{
-					throw FuncError("invalid regular expression")
-						.add("type", "invalid_query")
-						.add("expression", *ch);
-				}
-		}
+		for (ch++; *ch >= '0' && *ch <= '9'; ch++)
+			maxlen++;
 	}
-	while (lvl > 0);
+
+	if (*ch != '}' || (minlen == 0 && maxlen == 0))
+		throw FuncError("malformed regular expression")
+			.add("type", "invalid_query")
+			.add("msg", "unmatched '\\{' or invalid content of '\\{\\}'");
 
 	return ch;
 }

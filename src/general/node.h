@@ -42,7 +42,7 @@ class Node
 
 	private:
 		void tokenizeFixedString(const char *str);
-		Node *tokenizeRegex(const char **exp, bool extended);
+		Node *tokenizeRegex(const char **exp, bool extended, bool nested);
 
 		void makeDotGraphMarked(std::string &graph);
 
