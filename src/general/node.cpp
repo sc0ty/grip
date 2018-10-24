@@ -5,8 +5,8 @@
 using namespace std;
 
 
-static const char *skipBrackets(const char *ch);
-static const char *skipBraces(const char *ch);
+static const unsigned char *skipBrackets(const unsigned char *ch);
+static const unsigned char *skipBraces(const unsigned char *ch);
 
 
 Node::Node(int val) : val(val)
@@ -52,7 +52,7 @@ void Node::parseRegex(const string &exp, bool extended, bool caseSensitive)
 {
 	Node *node = addNext();
 
-	const char *e = exp.c_str();
+	const unsigned char *e = (const unsigned char*) exp.c_str();
 	node->tokenizeRegex(&e, extended, false);
 
 	if (!node->isUnambiguous())
@@ -69,14 +69,14 @@ void Node::parseRegex(const string &exp, bool extended, bool caseSensitive)
 	}
 }
 
-Node *Node::tokenizeRegex(const char **exp, bool extended, bool nested)
+Node *Node::tokenizeRegex(const unsigned char **exp, bool extended, bool nested)
 {
 	Node *node = addNext();
 	Node *prev = NULL;
 
 	bool branched = false;
 
-	const char *ch;
+	const unsigned char *ch;
 
 	for (ch = *exp; *ch != '\0'; ch++)
 	{
@@ -429,7 +429,7 @@ void Node::makeDotGraphMarked(string &graph)
 }
 
 // brackets [...]
-const char *skipBrackets(const char *ch)
+const unsigned char *skipBrackets(const unsigned char *ch)
 {
 	if (*ch != '[')
 		return ch;
@@ -440,7 +440,7 @@ const char *skipBrackets(const char *ch)
 	if (*ch == ']')
 		ch++;
 
-	ch = strchr(ch, ']');
+	ch = (const unsigned char*) strchr((const char*) ch, ']');
 	if (ch == NULL)
 		throw FuncError("malformed regular expression")
 			.add("type", "invalid_query")
@@ -450,7 +450,7 @@ const char *skipBrackets(const char *ch)
 }
 
 // braces {...}
-const char *skipBraces(const char *ch)
+const unsigned char *skipBraces(const unsigned char *ch)
 {
 	if (*ch != '{')
 		return ch;

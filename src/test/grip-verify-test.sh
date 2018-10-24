@@ -10,6 +10,8 @@ DIFF_DIR="$OUTPUT_DIR/diffs"
 GRIP='../grip/grip -E -f'
 GREP='grep -rnIE --include="*.cpp" -f'
 
+export LC_ALL=C
+
 find . -type f -name '*.cpp' | ../gripgen/gripgen
 
 mkdir -p "$TESTCASES_DIR"

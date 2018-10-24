@@ -18,10 +18,10 @@ class Node
 	public:
 		enum Value
 		{
-			NODE_EMPTY = CHAR_MAX + 1,
+			NODE_EMPTY = UCHAR_MAX + 1,
 			NODE_SPLIT,
 			NODE_END,
-			NODE_MARK = INT_MAX - (INT_MAX / 2),
+			NODE_MARK = UINT_MAX - (UINT_MAX / 2),
 		};
 
 	public:
@@ -42,7 +42,7 @@ class Node
 
 	private:
 		void tokenizeFixedString(const char *str);
-		Node *tokenizeRegex(const char **exp, bool extended, bool nested);
+		Node *tokenizeRegex(const unsigned char **exp, bool extended, bool nested);
 
 		void makeDotGraphMarked(std::string &graph);
 
@@ -56,7 +56,7 @@ class Node
 		Node *addCommonDescendant(NodePtr desc);
 
 	private:
-		int val;
+		unsigned val;
 		std::list<NodePtr> next;
 };
 
