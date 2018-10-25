@@ -436,9 +436,9 @@ const unsigned char *skipBrackets(const unsigned char *ch)
 
 	ch++;
 
-	// first ']' after '[' is not closing bracket
-	if (*ch == ']')
-		ch++;
+	// handle "[]...]" and "[^]...]" - first ']' is not terminating expression
+	if (*ch == '^') ch++;
+	if (*ch == ']') ch++;
 
 	ch = (const unsigned char*) strchr((const char*) ch, ']');
 	if (ch == NULL)
