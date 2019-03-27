@@ -31,6 +31,8 @@ void Glob::caseSensitive(bool enable)
 		m_flags &= ~FNM_CASEFOLD;
 	else
 		m_flags |= FNM_CASEFOLD;
+#else
+	(void) enable;
 #endif
 }
 

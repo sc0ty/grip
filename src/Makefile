@@ -9,6 +9,7 @@ ifeq ($(OS),Windows_NT)
 else
 	MKDIR   = mkdir -p
 	INSTALL = install -m 0755
+	CXXFLAGS_EXTRA = -D_POSIX_C_SOURCE
 endif
 
 CXXFLAGS ?= \
@@ -17,6 +18,7 @@ CXXFLAGS ?= \
 			-Wextra \
 			-pedantic \
 			-I. \
+			$(CXXFLAGS_EXTRA) \
 
 LDFLAGS ?= \
 		   --std=c++11 \

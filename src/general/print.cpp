@@ -3,7 +3,7 @@
 #include <cstdarg>
 #include <cassert>
 
-#if defined(_POSIX_C_SOURCE)
+#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 
@@ -149,7 +149,7 @@ namespace color
 
 	void init()
 	{
-#if defined(_POSIX_C_SOURCE)
+#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)
 		g_color = isatty(STDOUT_FILENO);
 #endif
 	}
