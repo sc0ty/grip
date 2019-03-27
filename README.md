@@ -39,7 +39,7 @@ For more information see [installation guide](doc/INSTALL.md)
 First we need to generate index database.
 Under POSIX system:
 ```
-find -type f | gripgen
+find . -type f | gripgen
 ```
 Or under Windows:
 ```
