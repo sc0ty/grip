@@ -1,5 +1,5 @@
-#include "external/catch.hpp"
-#include "grip/pattern.h"
+#include "catch.hpp"
+#include "../grip/pattern.h"
 #include <map>
 
 using namespace std;

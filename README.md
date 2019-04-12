@@ -24,14 +24,15 @@ Author: [Mike Szymaniak](http://sc0ty.pl)
 
 ## Requirements
 - C++11 compiler (e.g. GCC 4.8+ or Clang 3.4+);
-- POSIX-compatibile environment (tested on Ubuntu 16.04 and Debian 8) or [Boost library](http://www.boost.org) (tested on Windows 10).
+- POSIX-compatible environment (tested on Ubuntu 16.04 and Debian 8) or [Boost library](http://www.boost.org) (tested on Windows 10).
 
-## Installation
+## Compilation
 Assuming above requirements are met
 ```
-cd src
+mkdir build
+cd build
+cmake ..
 make
-make install
 ```
 For more information see [installation guide](doc/INSTALL.md)
 

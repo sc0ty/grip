@@ -2,10 +2,7 @@
 #include "dir.h"
 #include "error.h"
 
-#if !defined(_POSIX_C_SOURCE)
-#include "external/fnmatch.c"
-#endif
-
+#include "fnmatch.c"
 
 using namespace std;
 

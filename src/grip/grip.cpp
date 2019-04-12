@@ -1,3 +1,4 @@
+#include <boost/filesystem.hpp>
 #include "dbreader.h"
 #include "grep.h"
 #include "pattern.h"
@@ -12,14 +13,11 @@
 #include <cstdlib>
 #include <climits>
 
-#ifdef _POSIX_C_SOURCE
-#include <unistd.h>
-#include <getopt.h>
-#else
-#include "external/getopt.h"
-#include "external/getopt.c"
-#include "external/getopt1.c"
-#endif
+extern "C" {
+#include "getopt.h"
+#include "getopt.c"
+#include "getopt1.c"
+}
 
 using namespace std;
 

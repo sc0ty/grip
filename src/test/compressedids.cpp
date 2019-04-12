@@ -1,4 +1,4 @@
-#include "external/catch.hpp"
+#include "catch.hpp"
 #include "ids.h"
 
 using namespace std;

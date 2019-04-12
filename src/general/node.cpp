@@ -1,6 +1,7 @@
 #include "node.h"
 #include "case.h"
 #include <cstring>
+#include <cstdio>
 
 using namespace std;
 

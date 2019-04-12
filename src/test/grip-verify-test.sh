@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# build with command:
-# CXX=afl-g++ VERIFY=1 make
-
 TESTCASES_DIR=".grip/testcases"
 OUTPUT_DIR="findings"
 DIFF_DIR="$OUTPUT_DIR/diffs"
