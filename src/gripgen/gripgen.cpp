@@ -286,7 +286,7 @@ void usage(const char *name)
 	"      --chunk-size=SIZE     set chunks size (in MB)\n"
 	"  -v, --verbose[=LEVEL]     be verbose (repeat to increase)\n"
 	"  -q, --quiet, --silent     be quiet\n"
-	"  -s, --no-messages         supress error messages\n"
+	"  -s, --no-messages         suppress error messages\n"
 	"  -h, --help                display this help and exit\n"
 	"\n"
 	"LIST is file containing list of files to index, one per line.\n"
