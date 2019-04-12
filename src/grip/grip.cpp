@@ -372,7 +372,7 @@ void usage(const char *name)
 	"  -x, --line-regexp         force PATTERN to match only whole lines\n"
 	"\n"
 	"Miscellaneous:\n"
-	"  -s, --no-messages         supress error messages\n"
+	"  -s, --no-messages         suppress error messages\n"
 	"  -h, --help                display this help and exit\n"
 	"\n"
 	"Output control:\n"
