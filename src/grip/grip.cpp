@@ -53,6 +53,7 @@ static struct option const LONGOPTS[] =
 	{"exclude", required_argument, NULL, EXCLUDE_OPTION},
 	{"exclude-from", required_argument, NULL, EXCLUDE_FROM_OPTION},
 	{"file", required_argument, NULL, 'f'},
+	{"global", no_argument, NULL, 'g'},
 	{"include", required_argument, NULL, INCLUDE_OPTION},
 #if defined(FNM_EXTMATCH)
 	{"extended-glob", no_argument, NULL, EXTENDED_GLOB_OPTION},
@@ -76,7 +77,7 @@ static char const SHORTOPTS[] =
 #ifndef USE_MATCHER
 	"EFG"
 #endif
-	"A:B:C:f:hilswxV0123456789";
+	"A:B:C:f:ghilswxV0123456789";
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
@@ -107,6 +108,7 @@ int main(int argc, char * const argv[])
 
 		bool listOnly = false;
 		int verbose = 1;
+		bool global = false;
 
 		const char *dotGraphPath = NULL;
 
@@ -148,6 +150,10 @@ int main(int argc, char * const argv[])
 
 				case 'f':
 					readPatternsFromFile(optarg, patterns);
+					break;
+
+				case 'g':
+					global = true;
 					break;
 
 				case 'i':
@@ -280,10 +286,10 @@ int main(int argc, char * const argv[])
 			if (!isAbsolutePath(filePath))
 				filePath = string(dbdir + PATH_DELIMITER) + filePath;
 			canonizePath(filePath);
-
-			if (isInDirectory(cwd, filePath) && glob.compare(filePath))
+			if ((global || isInDirectory(cwd, filePath)) && glob.compare(filePath))
 			{
-				filePath = getRelativePath(cwd, filePath);
+				if (!global)
+					filePath = getRelativePath(dbdir, filePath);
 
 				if (listOnly)
 				{
@@ -366,6 +372,7 @@ void usage(const char *name)
 	"  -G, --basic-regexp        PATTERN is a basic regular expression (default)\n"
 #endif
 	"  -f, --file=FILE           obtain PATTERN from FILE\n"
+	"  -g, --global              show all matches\n"
 	"  -i, --ignore-case[=WHERE] ignore case distinction in PATTERN\n"
 	"                            WHERE is 'pattern', 'glob' or 'all' (default)\n"
 	"  -w, --word-regexp         force PATTERN to match only whole words\n"
