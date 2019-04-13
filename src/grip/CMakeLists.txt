@@ -1,3 +1,4 @@
+set (CMAKE_CXX_STANDARD 11)
 find_package(Boost REQUIRED COMPONENTS regex filesystem system)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})

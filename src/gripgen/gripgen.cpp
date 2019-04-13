@@ -130,8 +130,8 @@ int main(int argc, char * const argv[])
 
 		if (verbose >= 2)
 		{
-			println("max chunk size: %lu MB",
-					(unsigned long)chunkSize / (1024*1024));
+			println("max chunk size: %zu MB",
+					chunkSize / (1024*1024));
 		}
 
 		if (verbose >= 1)
@@ -208,11 +208,11 @@ int main(int argc, char * const argv[])
 
 			reprint("done");
 
-			println(" - files:    indexed %lu (%s), skipped %lu, total %lu",
-					(unsigned long)indexer.filesNo(),
+			println(" - files:    indexed %zu (%s), skipped %zu, total %zu",
+					indexer.filesNo(),
 					humanReadableSize(indexer.filesTotalSize()).c_str(),
-					(unsigned long)(filesNo - indexer.filesNo()),
-					(unsigned long)filesNo);
+					(filesNo - indexer.filesNo()),
+					filesNo);
 
 			println(" - speed:    %.1f files/sec, %s/sec",
 					filesSec,
