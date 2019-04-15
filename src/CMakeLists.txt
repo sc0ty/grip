@@ -1,0 +1,6 @@
+set (CMAKE_CXX_STANDARD 11)
+add_subdirectory (external)
+add_subdirectory (general)
+add_subdirectory (grip)
+add_subdirectory (gripgen)
+add_subdirectory (test)

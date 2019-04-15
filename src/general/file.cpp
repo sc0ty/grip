@@ -3,15 +3,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
-#ifdef USE_BOOST
 #include <boost/filesystem.hpp>
-using namespace boost;
-#else
-#include <unistd.h>
-#include <sys/stat.h>
-#endif
 
+using namespace boost;
 using namespace std;
 
 
@@ -35,8 +29,6 @@ void readFile(vector<uint8_t> &res, const char *fname, size_t sizeLimit)
 	res.resize(size);
 	file.read(res.data(), size);
 }
-
-#ifdef USE_BOOST
 
 void File::remove(const string &fname, bool ignoreNonExisting)
 {
@@ -67,27 +59,6 @@ void File::rename(const std::string &name, const std::string &newName)
 			.add("newFile", newName);
 	}
 }
-
-#else
-
-void File::remove(const string &fname, bool ignoreNonExisting)
-{
-	int res = unlink(fname.c_str());
-
-	if ((res != 0) && (!ignoreNonExisting || errno != ENOENT))
-		throw FuncError("cannot remove file", errno).add("file", fname);
-}
-
-void File::rename(const std::string &name, const std::string &newName)
-{
-	int res = ::rename(name.c_str(), newName.c_str());
-	if (res != 0)
-		throw FuncError("cannot remove file", errno)
-			.add("file", name)
-			.add("newFile", newName);
-}
-
-#endif
 
 File::File() : m_fp(NULL)
 {}

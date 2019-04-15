@@ -4,16 +4,6 @@
 #include <vector>
 #include <string>
 
-#if defined(_POSIX_C_SOURCE)
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <fnmatch.h>
-#else
-#include "external/fnmatch.h"
-#endif
-
-
 class Glob
 {
 	public:

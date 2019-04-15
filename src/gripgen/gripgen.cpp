@@ -1,27 +1,20 @@
 #include "indexer.h"
 #include "dir.h"
 #include "fileline.h"
-#include "queue.h"
 #include "config.h"
 #include "print.h"
 #include "error.h"
-#include <thread>
-#include <mutex>
-#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
 
-#ifdef _POSIX_C_SOURCE
-#include <unistd.h>
-#include <getopt.h>
-#else
-#include "external/getopt.h"
-#include "external/getopt.c"
-#include "external/getopt1.c"
-#endif
+extern "C" {
+#include "getopt.h"
+#include "getopt.c"
+#include "getopt1.c"
+}
 
 using namespace std;
 using namespace std::chrono;
@@ -48,8 +41,7 @@ static struct option const LONGOPTS[] =
 static char const SHORTOPTS[] = "hqsuvV";
 
 
-static void fileListProducer(FileLineReader &files);
-static void printProgress(const Indexer &indexer, const string &fileName);
+static void printProgress(const Indexer &indexer, unsigned long chunksNo, const string &fileName);
 static void printFileError(const Error &err, const char *fname);
 static void printGenericError(const Error &er);
 static void usage(const char *name);
@@ -57,12 +49,9 @@ static void version(const char *name);
 
 
 static steady_clock::time_point startTime, lastTime;
-static Queue<string> filesQueue;
-static atomic_bool fileListProducerRunning;
-static mutex printMutex;
 
 static bool supressErrors = false;
-static atomic_int result;
+static int result;
 
 
 int main(int argc, char * const argv[])
@@ -71,7 +60,6 @@ int main(int argc, char * const argv[])
 	size_t chunkSize = 64 * 1024 * 1024;
 
 	FileLineReader files;
-	bool fileListProducerThreadStarted = false;
 
 	int verbose = 1;
 	bool updateIndex = false;
@@ -142,8 +130,8 @@ int main(int argc, char * const argv[])
 
 		if (verbose >= 2)
 		{
-			println("max chunk size: %lu MB",
-					(unsigned long)chunkSize / (1024*1024));
+			println("max chunk size: %zu MB",
+					chunkSize / (1024*1024));
 		}
 
 		if (verbose >= 1)
@@ -151,46 +139,59 @@ int main(int argc, char * const argv[])
 
 		indexer.open();
 
-		fileListProducerRunning = true;
-		thread(fileListProducer, ref(files)).detach();
-		fileListProducerThreadStarted = true;
-
 		startTime = lastTime = steady_clock::now();
 
 		unsigned long chunksNo = 0;
+		unsigned long filesNo = 0;
 		string fileName;
+		const char *fname;
 
-		while (filesQueue.get(fileName))
+		try
 		{
-			try
+			while ((fname = files.readLine(false)) != NULL)
 			{
-				if (verbose >= 1)
-					printProgress(indexer, fileName);
-
-				indexer.indexFile(fileName);
-
-				if (indexer.size() >= chunkSize)
+				try
 				{
-					if (verbose >= 1)
-					{
-						unique_lock<mutex> lock(printMutex);
-						reprint("writing chunks to database...");
-						lastTime = steady_clock::now();
-					}
+					if (strncmp(fname, GRIP_DIR, sizeof(GRIP_DIR) - 1) == 0)
+						continue;
 
-					indexer.write();
-					chunksNo++;
+					if (strstr(fname, PATH_DELIMITER_S GRIP_DIR PATH_DELIMITER_S))
+						continue;
+
+					filesNo++;
+					canonizePath(fname, fileName);
+					if (verbose >= 1)
+						printProgress(indexer, filesNo, fileName);
+
+					indexer.indexFile(fileName);
+
+					if (indexer.size() >= chunkSize)
+					{
+						if (verbose >= 1)
+						{
+							reprint("writing chunks to database...");
+							lastTime = steady_clock::now();
+						}
+
+						indexer.write();
+						chunksNo++;
+					}
+				}
+				catch (const Error &ex)
+				{
+					printFileError(ex, fname);
 				}
 			}
-			catch (const Error &ex)
-			{
-				printFileError(ex, fileName.c_str());
-			}
 		}
+		catch (const Error &ex)
+		{
+			printGenericError(ex);
+			result = 2;
+		}
+
 
 		if (verbose >= 1)
 		{
-			unique_lock<mutex> lock(printMutex);
 			reprint("sorting chunks database...");
 		}
 
@@ -205,17 +206,13 @@ int main(int argc, char * const argv[])
 			float bytesSec = (float)indexer.filesTotalSize() * 1000.f / duration;
 			float filesSec = (float)indexer.filesNo() * 1000.f / duration;
 
-			size_t added, removed;
-			filesQueue.getStats(added, removed);
-
-			unique_lock<mutex> lock(printMutex);
 			reprint("done");
 
 			println(" - files:    indexed %zu (%s), skipped %zu, total %zu",
-					(indexer.filesNo()),
+					indexer.filesNo(),
 					humanReadableSize(indexer.filesTotalSize()).c_str(),
-					added - indexer.filesNo(),
-					added);
+					(filesNo - indexer.filesNo()),
+					filesNo);
 
 			println(" - speed:    %.1f files/sec, %s/sec",
 					filesSec,
@@ -241,74 +238,20 @@ int main(int argc, char * const argv[])
 		result = 1;
 	}
 
-	if (fileListProducerThreadStarted)
-	{
-		fileListProducerRunning = false;
-		filesQueue.wait();
-	}
-
 	return result;
 }
 
-void fileListProducer(FileLineReader &files)
-{
-	string fileName;
-	const char *fname;
-
-	try
-	{
-		while (fileListProducerRunning && (fname = files.readLine(false)) != NULL)
-		{
-			try
-			{
-				if (strncmp(fname, GRIP_DIR, sizeof(GRIP_DIR) - 1) == 0)
-					continue;
-
-				if (strstr(fname, PATH_DELIMITER_S GRIP_DIR PATH_DELIMITER_S))
-					continue;
-
-				canonizePath(fname, fileName);
-				filesQueue.put(fileName);
-			}
-			catch (const Error &ex)
-			{
-				printFileError(ex, fname);
-			}
-		}
-	}
-	catch (const Error &ex)
-	{
-		printGenericError(ex);
-		result = 2;
-	}
-
-	filesQueue.done();
-}
-
-void printProgress(const Indexer &indexer, const string &fileName)
+void printProgress(const Indexer &indexer, unsigned long chunksNo, const string &fileName)
 {
 	auto now = steady_clock::now();
 
 	if (duration_cast<milliseconds>(now - lastTime) > milliseconds(1000))
 	{
 		float duration = duration_cast<milliseconds>(now - startTime).count();
-		size_t added, removed;
-		bool done = filesQueue.getStats(added, removed);
 		float speed = (float) indexer.filesNo() * 1000.f / duration;
 
-		if (done)
-		{
-			float pr = (float) removed * 100.0f / (float) added;
-			unique_lock<mutex> lock(printMutex);
-			reprint("indexing file %zu/%zu %.1f%% (%.0f files/sec): %s",
-					removed, added, pr, speed, fileName.c_str());
-		}
-		else
-		{
-			unique_lock<mutex> lock(printMutex);
-			reprint("indexing file %zu/%zu+ (%.0f files/sec): %s",
-					removed, added, speed, fileName.c_str());
-		}
+		reprint("indexing file %lu+ (%.0f files/sec): %s",
+				chunksNo, speed, fileName.c_str());
 
 		lastTime = now;
 	}
@@ -318,7 +261,6 @@ void printFileError(const Error &err, const char *fname)
 {
 	if (!supressErrors)
 	{
-		unique_lock<mutex> lock(printMutex);
 		reprint("%s: %s; %s", fname, err.what(), err.get("msg").c_str());
 		printnl();
 	}
@@ -326,7 +268,6 @@ void printFileError(const Error &err, const char *fname)
 
 void printGenericError(const Error &err)
 {
-	unique_lock<mutex> lock(printMutex);
 	println("error: %s", err.what());
 	for (auto tag : err.tags)
 		println("\t%s: %s", tag.first.c_str(), tag.second.c_str());
@@ -342,7 +283,7 @@ void usage(const char *name)
 	"      --chunk-size=SIZE     set chunks size (in MB)\n"
 	"  -v, --verbose[=LEVEL]     be verbose (repeat to increase)\n"
 	"  -q, --quiet, --silent     be quiet\n"
-	"  -s, --no-messages         supress error messages\n"
+	"  -s, --no-messages         suppress error messages\n"
 	"  -h, --help                display this help and exit\n"
 	"\n"
 	"LIST is file containing list of files to index, one per line.\n"

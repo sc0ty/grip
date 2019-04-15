@@ -1,0 +1,10 @@
+find_package(Boost REQUIRED COMPONENTS filesystem system)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    add_library (General compressedids.cpp dbreader.cpp dir.cpp error.cpp file.cpp fileline.cpp filelist.cpp ids.cpp node.cpp print.cpp)
+    target_link_libraries(General LINK_PUBLIC ${Boost_LIBRARIES})
+    target_include_directories (General PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+else()
+    message("Boost libraries (regex filesystem system) not found!")
+endif()
+

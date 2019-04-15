@@ -3,13 +3,7 @@
 #include "error.h"
 #include <cstring>
 
-#if defined(USE_BOOST)
 #include <boost/regex.h>
-#elif defined(_POSIX_C_SOURCE) || defined(_POSIX_SOURCE)
-#include <sys/types.h>
-#include <regex.h>
-#endif
-
 
 #define IS_WORD_CHAR(x)	( \
 	((x)>='a' && (x)<='z') || \
