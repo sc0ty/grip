@@ -21,10 +21,13 @@
 #define VERSION "CUSTOM-BUILD"
 #endif
 
+#define XSTR(x) _STR(x)
+#define _STR(x) #x
+
 #ifdef NDEBUG
-#define VERSION_STR VERSION
+#define VERSION_STR XSTR(VERSION)
 #else
-#define VERSION_STR VERSION "-debug"
+#define VERSION_STR XSTR(VERSION) "-debug"
 #endif
 
 #endif
