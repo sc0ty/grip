@@ -289,7 +289,7 @@ int main(int argc, char * const argv[])
 			if ((global || isInDirectory(cwd, filePath)) && glob.compare(filePath))
 			{
 				if (!global)
-					filePath = getRelativePath(dbdir, filePath);
+					filePath = getRelativePath(cwd, filePath);
 
 				if (listOnly)
 				{
