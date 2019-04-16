@@ -12,8 +12,6 @@
 
 extern "C" {
 #include "getopt.h"
-#include "getopt.c"
-#include "getopt1.c"
 }
 
 using namespace std;

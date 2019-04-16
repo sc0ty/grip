@@ -2,7 +2,9 @@
 #include "dir.h"
 #include "error.h"
 
-#include "fnmatch.c"
+extern "C" {
+#include "fnmatch.h"
+}
 
 using namespace std;
 
