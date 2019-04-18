@@ -5,3 +5,6 @@
 *.vim
 .grip
 tags
+/build
+/rel
+/dev
