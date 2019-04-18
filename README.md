@@ -4,7 +4,6 @@ Indexed grep - fast search (grep like) in huge stack of files.
 Author: [Mike Szymaniak](http://sc0ty.pl)
 
 ## Features
-- support for POSIX (Linux and UNIX) and Windows (with MinGW);
 - fast search for pattern in text files;
 - intended mainly (but not limited to) source code;
 - support for Huge Blobs of Legacy Code&trade;;
