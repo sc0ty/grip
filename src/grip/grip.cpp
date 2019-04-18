@@ -370,7 +370,7 @@ void usage(const char *name)
 	"  -G, --basic-regexp        PATTERN is a basic regular expression (default)\n"
 #endif
 	"  -f, --file=FILE           obtain PATTERN from FILE\n"
-	"  -g, --global              show all matches\n"
+	"  -g, --global              show all matches, including parent directories\n"
 	"  -i, --ignore-case[=WHERE] ignore case distinction in PATTERN\n"
 	"                            WHERE is 'pattern', 'glob' or 'all' (default)\n"
 	"  -w, --word-regexp         force PATTERN to match only whole words\n"
