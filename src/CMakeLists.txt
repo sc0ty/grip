@@ -13,6 +13,11 @@ if(GIT_FOUND)
 endif()
 
 set (CMAKE_CXX_STANDARD 11)
+
+if(MINGW)
+    add_definitions(-D__USE_MINGW_ANSI_STDIO=1)
+endif()
+
 add_subdirectory (external)
 add_subdirectory (general)
 add_subdirectory (grip)
