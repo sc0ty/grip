@@ -36,4 +36,4 @@ cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 make
 ```
 
-It should be possible to build it with Visual Studio or anythong that cmake supports.
+It should be possible to build it with Visual Studio or anything that cmake supports.
