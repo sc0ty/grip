@@ -30,7 +30,7 @@ unsigned CompressedIds::add(uint32_t id)
 
 		if ((m_lastDelta != (uint32_t) -1) && (delta == m_lastDelta))
 		{
-			if (m_ids.back() >= 0x40 && m_ids.back() < 0x7f)
+			if (!m_ids.empty() && m_ids.back() >= 0x40 && m_ids.back() < 0x7f)
 			{
 				m_ids.back()++;
 			}
