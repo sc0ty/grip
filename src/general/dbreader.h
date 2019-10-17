@@ -17,7 +17,7 @@ class DbReader
 		DbReader(const std::string &dir = "");
 
 		const CompressedIds &get(uint32_t trigram);
-		const std::vector<Index> getIndexes() const;
+		const std::vector<Index> &getIndexes() const;
 
 		void clearCache();
 

@@ -12,6 +12,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+#include <sstream>
+#include <iomanip>
 
 extern "C" {
 #include "getopt.h"
@@ -28,6 +30,7 @@ enum
 	INCLUDE_OPTION,
 	EXTENDED_GLOB_OPTION,
 	DOT_GRAPH_OPTION,
+	DUMP_DB_OPTION,
 	GLOB_TYPE_OPTIONS,			// must be last one
 };
 
@@ -46,6 +49,7 @@ static struct option const LONGOPTS[] =
 	{"color", optional_argument, NULL, COLOR_OPTION},
 	{"colour", optional_argument, NULL, COLOR_OPTION},
 	{"dot", required_argument, NULL, DOT_GRAPH_OPTION},
+	{"dumpdb", required_argument, NULL, DUMP_DB_OPTION},
 	{"help", no_argument, NULL, 'h'},
 	{"ignore-case", optional_argument, NULL, 'i'},
 	{"exclude", required_argument, NULL, EXCLUDE_OPTION},
@@ -79,7 +83,8 @@ static char const SHORTOPTS[] =
 
 static void readPatternsFromFile(const char *fname, vector<string> &patterns);
 static void readExcludeFromFile(Glob &glob, const char *fname);
-static void saveDotGraph(Node *tree, const char *fname);
+static void dumpDb(DbReader &db, const string &fname);
+static void saveDotGraph(Node *tree, const string &fname);
 static void usage(const char *name);
 static void version(const char *name);
 
@@ -109,6 +114,7 @@ int main(int argc, char * const argv[])
 		bool global = false;
 
 		const char *dotGraphPath = NULL;
+		const char *dumpDbPath = NULL;
 
 		int opt;
 		while ((opt = getopt_long(argc, argv, SHORTOPTS, LONGOPTS, NULL)) != -1)
@@ -144,6 +150,10 @@ int main(int argc, char * const argv[])
 
 				case DOT_GRAPH_OPTION:
 					dotGraphPath = optarg;
+					break;
+
+				case DUMP_DB_OPTION:
+					dumpDbPath = optarg;
 					break;
 
 				case 'f':
@@ -252,7 +262,7 @@ int main(int argc, char * const argv[])
 		for (int i = optind; i < argc; i++)
 			patterns.push_back(argv[i]);
 
-		if (patterns.empty())
+		if (patterns.empty() && dumpDbPath == NULL)
 		{
 			usage(argv[0]);
 			return 2;
@@ -264,6 +274,14 @@ int main(int argc, char * const argv[])
 		DbReader database(dbdir);
 		Ids ids;
 		Node tree;
+
+		if (dumpDbPath)
+		{
+			if (verbose >= 1)
+				fprintf(stderr, "dumping database to %s\n",
+						strcmp(dumpDbPath, "-") ? dumpDbPath : "stdout");
+			dumpDb(database, dumpDbPath);
+		}
 
 		for (const string &pattern : patterns)
 		{
@@ -348,12 +366,38 @@ void readExcludeFromFile(Glob &glob, const char *fname)
 	}
 }
 
-void saveDotGraph(Node *tree, const char *fname)
+void dumpDb(DbReader &db, const string &fname)
+{
+	File dst;
+	if (fname == "-")
+		dst.open(stdout);
+	else
+		dst.open(fname, "wb");
+
+	for (const Index &index : db.getIndexes())
+	{
+		const CompressedIds &ids = db.get(index.trigram);
+		for (CompressedIds::iterator it = ids.begin(); !it.end(); ++it)
+		{
+			stringstream line;
+			line << std::setfill('0') << std::setw(6) << std::hex
+				<< index.trigram << ' ' << db.getFile(*it);
+			dst.writeLine(line.str());
+		}
+		db.clearCache();
+	}
+}
+
+void saveDotGraph(Node *tree, const string &fname)
 {
 	string graph;
 	tree->makeDotGraph(graph);
 
-	File fp(fname, "w");
+	File fp;
+	if (fname == "-")
+		fp.open(stdout);
+	else
+		fp.open(fname, "w");
 	fp.writeLine(graph);
 }
 
@@ -399,6 +443,7 @@ void usage(const char *name)
 	"                            WHEN is 'always', 'never', or 'auto' (default)\n"
 	"\n"
 	"Debug options:\n"
+	"  --dumpdb=FILE             dump database to textual file\n"
 	"  --dot=FILE                save query as Graphviz DOT graph\n",
 	name);
 }

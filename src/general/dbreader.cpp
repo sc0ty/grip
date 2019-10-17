@@ -74,7 +74,7 @@ const CompressedIds &DbReader::get(uint32_t trigram)
 	return ids;
 }
 
-const vector<Index> DbReader::getIndexes() const
+const vector<Index> &DbReader::getIndexes() const
 {
 	return m_indexes;
 }
@@ -102,4 +102,3 @@ uint32_t DbReader::getFilesNo() const
 {
 	return m_fileList.size();
 }
-
