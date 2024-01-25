@@ -1,6 +1,7 @@
 #ifndef __FILES_H__
 #define __FILES_H__
 
+#include <cstdint>
 #include <vector>
 #include <string>
 
