@@ -1,6 +1,7 @@
 #ifndef __IO_H__
 #define __IO_H__
 
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <cstddef>
